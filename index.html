@@ -20,7 +20,10 @@
   --bg:#EDF1F5; --surface:#FFFFFF; --surface2:#F5F7FA; --ink:#101B2D; --muted:#5B677A; --line:#D5DCE6;
   --ok-fill:#12805C; --ok-soft:rgba(18,128,92,.26);
   --bad-fill:#D6293E; --bad-soft:rgba(214,41,62,.26); --bad-tint:#FBE9EC;
-  --warn-fill:#A85F00; --warn-soft:rgba(168,95,0,.28); --warn-tint:#FFF1DA;
+  --warn-fill:#0E7490; --warn-soft:rgba(14,116,144,.28); --warn-tint:#E1F4F8;
+  --caution:#A85F00; --caution-tint:#FFF1DA;
+  --ov-fill:#F5C400; --ov-tint:#FFF6BF; --on-ov:#1A1A1A; --ov-text:#7A5B00;
+  --sc-d:#8E1B2B; --sc-l:#F4A9B0; --ar-d:#17613A; --ar-l:#A8DDB7; --gr-d:#4B5563; --gr-l:#CBD2DB; --on-d:#FFFFFF; --on-l:#1A1A1A;
   --on-fill:#FFFFFF; --focus:#2F5BEA; --primary:#16284A; --on-primary:#FFFFFF;
   --font-d:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
   --font-b:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -33,7 +36,10 @@
     --bg:#0E1522; --surface:#172133; --surface2:#1E2A40; --ink:#E8EDF5; --muted:#93A0B5; --line:#2A374D;
     --ok-fill:#38C493; --ok-soft:rgba(56,196,147,.30);
     --bad-fill:#FF5C6E; --bad-soft:rgba(255,92,110,.30); --bad-tint:#2D1B25;
-    --warn-fill:#F2A93B; --warn-soft:rgba(242,169,59,.30); --warn-tint:#33270F;
+    --warn-fill:#38BDF8; --warn-soft:rgba(56,189,248,.30); --warn-tint:#0F2A33;
+    --caution:#F2A93B; --caution-tint:#33270F;
+    --ov-fill:#FFD43B; --ov-tint:#3A3208; --on-ov:#1A1A1A; --ov-text:#FFD43B;
+    --sc-d:#A12B3A; --sc-l:#EE9AA3; --ar-d:#1F7A4A; --ar-l:#8FD2A6; --gr-d:#6B7280; --gr-l:#AEB6C2; --on-d:#FFFFFF; --on-l:#12161C;
     --on-fill:#0B1220; --focus:#7C9BFF; --primary:#E8EDF5; --on-primary:#0E1522;
   }
 }
@@ -42,10 +48,14 @@
   --bg:#0E1522; --surface:#172133; --surface2:#1E2A40; --ink:#E8EDF5; --muted:#93A0B5; --line:#2A374D;
   --ok-fill:#38C493; --ok-soft:rgba(56,196,147,.30);
   --bad-fill:#FF5C6E; --bad-soft:rgba(255,92,110,.30); --bad-tint:#2D1B25;
-  --warn-fill:#F2A93B; --warn-soft:rgba(242,169,59,.30); --warn-tint:#33270F;
+  --warn-fill:#38BDF8; --warn-soft:rgba(56,189,248,.30); --warn-tint:#0F2A33;
+    --caution:#F2A93B; --caution-tint:#33270F;
+    --ov-fill:#FFD43B; --ov-tint:#3A3208; --on-ov:#1A1A1A; --ov-text:#FFD43B;
+    --sc-d:#A12B3A; --sc-l:#EE9AA3; --ar-d:#1F7A4A; --ar-l:#8FD2A6; --gr-d:#6B7280; --gr-l:#AEB6C2; --on-d:#FFFFFF; --on-l:#12161C;
   --on-fill:#0B1220; --focus:#7C9BFF; --primary:#E8EDF5; --on-primary:#0E1522;
 }
 *,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.4;-webkit-text-size-adjust:100%}
@@ -70,13 +80,19 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .legend .gt{font-weight:600;color:var(--muted)}
 .legend .it{display:inline-flex;align-items:center;gap:6px}
 .sw{width:16px;height:16px;border-radius:4px;display:inline-block}
-.sw.ok{background:var(--ok-fill)} .sw.bad{background:var(--bad-fill)} .sw.warn{background:var(--warn-fill)}
+.sw.scd{background:var(--sc-d)} .sw.scl{background:var(--sc-l);border:1.5px solid var(--sc-d)}
+.sw.ard{background:var(--ar-d)} .sw.arl{background:var(--ar-l);border:1.5px solid var(--ar-d)}
+.sw.grd{background:var(--gr-l);border:1.5px solid var(--gr-d)}
+.sw.ringov{background:var(--surface);border:3px solid var(--ov-fill)}
+.sw.ringtr{background:var(--surface);border:3px solid var(--warn-fill)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.dot.sc{background:var(--sc-d)} .dot.am{background:var(--ar-d)}
 
 .stats{display:flex;gap:22px;flex-wrap:wrap;margin:0 0 14px}
 .stat{display:flex;align-items:baseline;gap:7px}
 .stat b{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1}
 .stat span{color:var(--muted);font-size:13.5px}
-.stat.warn b{color:var(--bad-fill)}
+.stat.warn b{color:var(--ov-text)}
 .stat.travel b{color:var(--warn-fill)}
 
 .layout{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
@@ -92,30 +108,30 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .cell.other{background:var(--surface2)}
 .cell.other .dn{color:var(--muted);opacity:.7}
 .cell.has-warn{background:var(--warn-tint)}
-.cell.has-bad{background:var(--bad-tint)}
+.cell.has-bad{background:var(--ov-tint)}
 .cell.sel{outline:3px solid var(--focus);outline-offset:-3px}
 .cell:hover{filter:brightness(.985)}
 .ctop{display:flex;align-items:center;justify-content:space-between;min-height:24px;gap:4px}
 .dn{font-family:var(--font-d);font-weight:600;font-size:19px;line-height:1;width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
 .cell.today .dn{background:var(--ink);color:var(--surface)}
 .badges{display:flex;gap:4px}
-.cbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bad-fill);color:var(--on-fill);border-radius:999px;padding:2px 7px 2px 5px;font-size:12px;font-weight:700}
-.cbadge.warn{background:var(--warn-fill)}
+.cbadge{display:inline-flex;align-items:center;gap:3px;background:var(--ov-fill);color:var(--on-ov);border-radius:999px;padding:2px 7px 2px 5px;font-size:12px;font-weight:700}
+.cbadge.warn{background:var(--warn-fill);color:var(--on-fill)}
 .cbadge svg{width:12px;height:12px}
-.chips{display:flex;flex-direction:column;gap:3px;min-width:0}
+.chips{display:flex;flex-direction:column;gap:7px;min-width:0}
 .more{font-size:12px;color:var(--muted);font-weight:600;padding-left:2px}
 
 /* ---------- Match chip / event (shared look) ---------- */
-.chip,.ev{--f:var(--ok-fill);--on:var(--on-fill);--soft:var(--ok-soft)}
-.chip.bad,.ev.bad{--f:var(--bad-fill);--soft:var(--bad-soft)}
-.chip.warn,.ev.warn{--f:var(--warn-fill);--soft:var(--warn-soft)}
-.chip.neutral{--f:var(--ink);--on:var(--surface);--soft:rgba(128,140,160,.30)}
-.chip,.ev{border:1.5px solid var(--f);border-radius:7px}
-.chip.local,.ev.local{background:var(--f);color:var(--on)}
-.chip.away,.ev.away{background:repeating-linear-gradient(135deg,var(--soft) 0 4px,transparent 4px 9px),var(--surface);color:var(--ink)}
+.chip,.ev{--bd:var(--gr-d);--bl:var(--gr-l);border:1.5px solid var(--bd);border-radius:7px}
+.chip.sc,.ev.sc{--bd:var(--sc-d);--bl:var(--sc-l)}
+.chip.am,.ev.am{--bd:var(--ar-d);--bl:var(--ar-l)}
+.chip.local,.ev.local{background:var(--bd);color:var(--on-d)}
+.chip.away,.ev.away{background:var(--bl);color:var(--on-l)}
+.chip.bad,.ev.bad{box-shadow:0 0 0 2px var(--surface),0 0 0 4.5px var(--ov-fill)}
+.chip.warn,.ev.warn{box-shadow:0 0 0 2px var(--surface),0 0 0 4.5px var(--warn-fill)}
 .tag{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;font-family:var(--font-d);font-weight:700;font-size:13px;line-height:1;flex:none}
-.local .tag{background:var(--on);color:var(--f)}
-.away .tag{background:var(--f);color:var(--on)}
+.local .tag{background:var(--on-d);color:var(--bd)}
+.away .tag{background:var(--bd);color:var(--on-d)}
 .chip{display:flex;align-items:flex-start;gap:5px;padding:3px 5px 3px 3px;font-size:12.5px;font-weight:600;line-height:1.2;text-align:left;width:100%;min-width:0}
 .chip .t{font-variant-numeric:tabular-nums;flex:none}
 .chip .rv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-weight:500}
@@ -124,8 +140,6 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .chip .l1{display:flex;gap:5px;min-width:0}
 .chip .co,.chip .vn{font-size:11px;font-weight:500;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip .cx{font-size:10.5px;font-weight:700;white-space:normal;line-height:1.15;margin-top:1px}
-.chip.away.bad .cx{color:var(--bad-fill)}
-.chip.away.warn .cx{color:var(--warn-fill)}
 
 @media (max-width:640px){
   .cell{min-height:76px;padding:4px 3px}
@@ -146,8 +160,8 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
 .dtitle{font-family:var(--font-d);font-weight:700;font-size:30px;line-height:1;margin:0}
 .dsub{color:var(--muted);font-size:13.5px;margin:4px 0 0}
-.alert{background:var(--bad-tint);border:1.5px solid var(--bad-fill);border-radius:10px;padding:9px 12px;margin:12px 0 4px;font-size:13.5px}
-.alert b{color:var(--bad-fill);display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.alert{background:var(--ov-tint);border:1.5px solid var(--ov-fill);border-radius:10px;padding:9px 12px;margin:12px 0 4px;font-size:13.5px}
+.alert b{color:var(--ov-text);display:flex;align-items:center;gap:6px;margin-bottom:3px}
 .alert.warn{background:var(--warn-tint);border-color:var(--warn-fill)}
 .alert.warn b{color:var(--warn-fill)}
 .alert svg{width:15px;height:15px}
@@ -188,12 +202,14 @@ fieldset label{display:block;cursor:pointer}
 fieldset input{position:absolute;opacity:0;pointer-events:none}
 .segopt{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:600}
 .segopt .tag{background:var(--ink);color:var(--surface)}
+input:checked + .segopt.club{border-color:var(--ink);background:var(--surface2);box-shadow:inset 0 0 0 1px var(--ink)}
 input:checked + .segopt.local{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 input:checked + .segopt.local .tag{background:var(--surface);color:var(--ink)}
 input:checked + .segopt.away{background:repeating-linear-gradient(135deg,rgba(128,140,160,.35) 0 4px,transparent 4px 9px),var(--surface);border-color:var(--ink)}
 input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
 .fmsg{min-height:44px;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:500;background:color-mix(in srgb,var(--ok-fill) 12%,var(--surface));border:1.5px solid var(--ok-fill)}
-.fmsg.bad,.fmsg.err{background:var(--bad-tint);border-color:var(--bad-fill)}
+.fmsg.bad{background:var(--ov-tint);border-color:var(--ov-fill)}
+.fmsg.err{background:var(--bad-tint);border-color:var(--bad-fill)}
 .fmsg.warn{background:var(--warn-tint);border-color:var(--warn-fill)}
 .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .actions .sp{flex:1}
@@ -202,7 +218,7 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
 .pair input{padding:8px 9px}
 .netmsg{border-radius:10px;padding:9px 12px;margin:0 0 14px;font-size:13.5px;font-weight:500;background:var(--surface);border:1.5px solid var(--line)}
 .netmsg.ok{border-color:var(--ok-fill);background:color-mix(in srgb,var(--ok-fill) 12%,var(--surface))}
-.netmsg.bad{border-color:var(--warn-fill);background:var(--warn-tint)}
+.netmsg.bad{border-color:var(--caution);background:var(--caution-tint)}
 #tdlg form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
 .box{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface2)}
 .box>b{font-family:var(--font-d);font-size:19px;font-weight:600}
@@ -210,6 +226,23 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
 .pair small{display:block;color:var(--muted);font-weight:400;font-size:12px}
 .fmsg b{font-weight:700}
 a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
+#idlg{width:min(1000px,calc(100% - 24px))}
+#idlg form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+.drop{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--line);border-radius:12px;padding:20px;cursor:pointer;font-weight:600;text-align:center;background:var(--surface2)}
+.drop:hover{border-color:var(--ink)}
+.drop:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:19px}
+.pscroll{overflow:auto;max-height:44vh;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.ptable{width:100%;border-collapse:collapse;font-size:13px;min-width:880px}
+.ptable th{position:sticky;top:0;background:var(--surface2);text-align:left;padding:6px;font-weight:600;border-bottom:1px solid var(--line);z-index:1}
+.ptable td{padding:4px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ptable input[type=text],.ptable input[type=date],.ptable input[type=time],.ptable select{padding:6px 7px;font-size:13px;border-radius:7px}
+.ptable input[type=checkbox]{width:18px;height:18px}
+.ptable .st{font-size:12px;font-weight:700;white-space:nowrap;padding-left:6px}
+.st.ok{color:var(--ok-fill)} .st.warn{color:var(--caution)} .st.bad{color:var(--bad-fill)} .st.dup{color:var(--muted)}
+.ptable tr.off td:not(:first-child):not(.st){opacity:.55}
 .foot{margin-top:22px;text-align:center;font-size:12.5px;color:var(--muted)}
 .foot button{background:none;border:0;color:var(--muted);text-decoration:underline;padding:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -224,21 +257,23 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
       <div class="monthname" id="monthname" aria-live="polite"></div>
       <button class="btn icon" id="next" aria-label="Mes siguiente">›</button>
       <button class="btn" id="today">Hoy</button>
+      <button class="btn" id="importBtn">Importar</button>
       <button class="btn" id="travelBtn">Trayectos</button>
       <button class="btn primary" id="add">Nuevo partido</button>
     </div>
   </header>
 
   <div class="legend" aria-label="Leyenda">
-    <div class="grp"><span class="gt">Color</span>
-      <span class="it"><span class="sw ok"></span>Sin conflicto</span>
-      <span class="it"><span class="sw bad"></span>Se superpone</span>
-      <span class="it"><span class="sw warn"></span>No da tiempo al trayecto</span>
-    </div>
-    <div class="grp"><span class="gt">Condición</span>
-      <span class="it"><span class="chip local neutral" style="width:auto;padding:2px 8px 2px 3px;align-items:center"><span class="tag">L</span>Local (relleno)</span></span>
-      <span class="it"><span class="chip away neutral" style="width:auto;padding:2px 8px 2px 3px;align-items:center"><span class="tag">V</span>Visitante (rayado)</span></span>
-    </div>
+    <div class="grp"><span class="gt">Sant Celoni</span>
+      <span class="it"><span class="sw scd"></span>Local</span>
+      <span class="it"><span class="sw scl"></span>Visitante</span></div>
+    <div class="grp"><span class="gt">Arenys de Mar</span>
+      <span class="it"><span class="sw ard"></span>Local</span>
+      <span class="it"><span class="sw arl"></span>Visitante</span></div>
+    <div class="grp" id="legNoClub" hidden><span class="it"><span class="sw grd"></span>Sin club asignado</span></div>
+    <div class="grp"><span class="gt">Avisos</span>
+      <span class="it"><span class="sw ringov"></span>Se superpone</span>
+      <span class="it"><span class="sw ringtr"></span>No da tiempo al trayecto</span></div>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -259,6 +294,11 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
 <dialog id="dlg" aria-labelledby="dlgTitle">
   <form id="f" novalidate>
     <h2 id="dlgTitle">Nuevo partido</h2>
+    <fieldset>
+      <legend>Club</legend>
+      <label><input type="radio" name="club" value="SC" checked><span class="segopt club"><span class="dot sc"></span>Sant Celoni</span></label>
+      <label><input type="radio" name="club" value="AM"><span class="segopt club"><span class="dot am"></span>Arenys de Mar</span></label>
+    </fieldset>
     <fieldset>
       <legend>Condición</legend>
       <label><input type="radio" name="side" value="L" checked><span class="segopt local"><span class="tag">L</span>Local</span></label>
@@ -332,6 +372,52 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
   </form>
 </dialog>
 
+<!-- Importar -->
+<dialog id="idlg" aria-labelledby="iTitle">
+  <form id="if" novalidate>
+    <h2 id="iTitle">Importar partidos</h2>
+    <p class="hint">Sube un archivo PDF, CSV o Excel (XLSX). Antes de añadir nada verás una vista previa para revisar y corregir cada partido.</p>
+    <div class="box">
+      <label class="fld">Club de los partidos de este archivo
+        <select id="iclubsel">
+          <option value="">Detectar por el nombre del equipo</option>
+          <option value="SC">Todos son de Sant Celoni</option>
+          <option value="AM">Todos son de Arenys de Mar</option>
+        </select></label>
+      <details>
+        <summary class="hint" style="cursor:pointer">Cómo se reconocen los clubes en los archivos</summary>
+        <div class="row2" style="margin-top:8px">
+          <label class="fld">Sant Celoni aparece como<input type="text" id="itermSC" maxlength="80" autocomplete="off"></label>
+          <label class="fld">Arenys de Mar aparece como<input type="text" id="itermAM" maxlength="80" autocomplete="off"></label>
+        </div>
+        <p class="hint" style="margin-top:6px">Puedes poner varios nombres separados por comas.</p>
+      </details>
+    </div>
+    <label class="drop"><input type="file" id="ifile" accept=".pdf,.csv,.xlsx,.xls,.xlsm,.txt,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><span>Elegir un archivo o arrastrarlo aquí (PDF, CSV, XLSX)</span></label>
+    <div class="fmsg" id="istatus" hidden aria-live="polite"></div>
+    <div id="iopts" hidden>
+      <div class="box">
+        <div class="row2">
+          <label class="fld">Duración por defecto
+            <select id="idur"><option value="45">45 min</option><option value="60">1 h</option><option value="90">1 h 30</option><option value="120" selected>2 h</option><option value="150">2 h 30</option><option value="180">3 h</option></select></label>
+          <label class="fld">Año si la fecha no lo trae<input type="number" id="iyear" min="2000" max="2100" step="1" inputmode="numeric"></label>
+        </div>
+        <label class="fld" id="isheetwrap" hidden>Hoja del Excel<select id="isheet"></select></label>
+      </div>
+      <details class="box" id="imap" style="margin-top:12px">
+        <summary>Columnas detectadas (ajústalas si algo no cuadra)</summary>
+        <div class="mapgrid" id="imapgrid"></div>
+      </details>
+      <div id="iprev" style="margin-top:12px"></div>
+    </div>
+    <div class="actions">
+      <span class="sp"></span>
+      <button type="button" class="btn" id="icancel">Cancelar</button>
+      <button type="button" class="btn primary" id="iadd" disabled>Añadir partidos</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 (function(){
   const STORE='partidos-v2', TSTORE='partidos-v2-travel';
@@ -351,6 +437,11 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
   const pk=(a,b)=>[norm(a),norm(b)].sort().join('|');
   const ALERT='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2 14.5 13.5h-13Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 6.6v3M8 11.6v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 
+  const CLUBS={SC:{name:'Sant Celoni',cls:'sc'},AM:{name:'Arenys de Mar',cls:'am'}};
+  const clubCls=m=>CLUBS[m.club]?CLUBS[m.club].cls:'xx';
+  const clubName=m=>CLUBS[m.club]?CLUBS[m.club].name:'Sin club';
+  const clubTag=m=>m.club?m.club+': ':'';
+
   /* ---------- storage ---------- */
   const COACH={'Sub-10':'Marta Ruiz','Sub-12':'Luis Pérez','Sub-14':'Carlos Gil','Sub-16':'Carlos Gil','Senior':'Javier Mora'};
   function load(){
@@ -368,7 +459,7 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
       const r=localStorage.getItem(TSTORE);
       if(r){
         const c=JSON.parse(r);
-        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{}};
+        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC'};
       }
     }catch(e){}
     return null;
@@ -392,7 +483,8 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
       [23,'20:00',120,'Racing Sur','V','Senior','Estadio Racing'],
       [26,'12:00',120,'CD Faro','L','Sub-14','Campo municipal'],
       [26,'13:30',120,'Unión Playa','V','Sub-16','Estadio Playa']];
-    return S.map(([d,time,dur,rival,side,team,venue])=>({id:uid(),date:key(y,mo,Math.min(d,dim)),time,dur,rival,side,team,venue,coach:COACH[team]||''}));
+    const CL={'Sub-10':'SC','Sub-12':'SC','Senior':'SC','Sub-14':'AM','Sub-16':'AM'};
+    return S.map(([d,time,dur,rival,side,team,venue])=>({id:uid(),date:key(y,mo,Math.min(d,dim)),time,dur,rival,side,team,venue,coach:COACH[team]||'',club:CL[team]||'SC'}));
   }
   function seedPairs(){
     const P={};
@@ -405,7 +497,7 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
   let matches=load(),seeded=false;
   if(!Array.isArray(matches)){matches=seed();save();seeded=true;}
   let cfg=loadCfg();
-  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{}};saveCfg();}
+  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC'};saveCfg();}
   let geo=loadGeo();
 
   const now=new Date();
@@ -564,6 +656,8 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
     const warn=mm.filter(m=>status(m,cm)==='warn').length;
     document.getElementById('stats').innerHTML=
       `<div class="stat"><b>${mm.length}</b><span>partidos en el mes</span></div>`+
+      `<div class="stat"><b>${mm.filter(m=>m.club==='SC').length}</b><span><i class="dot sc"></i>Sant Celoni</span></div>`+
+      `<div class="stat"><b>${mm.filter(m=>m.club==='AM').length}</b><span><i class="dot am"></i>Arenys de Mar</span></div>`+
       `<div class="stat"><b>${loc}</b><span>locales</span></div>`+
       `<div class="stat"><b>${vis}</b><span>visitantes</span></div>`+
       `<div class="stat ${bad?'warn':''}"><b>${bad}</b><span>${bad===1?'partido superpuesto':'partidos superpuestos'}</span></div>`+
@@ -575,8 +669,8 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
     const st=status(m,cm);
     const local=m.side==='L';
     const cross=crossText(m,cm);
-    const label=`${local?'Local':'Visitante'} ${m.time} ${m.rival}${m.venue?', en '+m.venue:''}${m.coach?', entrenador '+m.coach:''}${cross?'. '+cross:''}`;
-    return `<button type="button" class="chip ${st} ${local?'local':'away'}" data-edit="${m.id}" title="${esc(label)}" aria-label="${esc(label)}">`+
+    const label=`${clubName(m)}: ${local?'Local':'Visitante'} ${m.time} ${m.rival}${m.venue?', en '+m.venue:''}${m.coach?', entrenador '+m.coach:''}${cross?'. '+cross:''}`;
+    return `<button type="button" class="chip ${st} ${clubCls(m)} ${local?'local':'away'}" data-edit="${m.id}" title="${esc(label)}" aria-label="${esc(label)}">`+
       `<span class="tag">${local?'L':'V'}</span><span class="ct"><span class="l1"><span class="t">${m.time}</span><span class="rv">${esc(m.rival)}</span></span>`+
       (m.venue?`<span class="vn">${esc(m.venue)}</span>`:'')+
       (m.coach?`<span class="co">Entr. ${esc(m.coach)}</span>`:'')+
@@ -663,7 +757,7 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
       if(r.kind==='overlap')ovPairs.push([list[i],list[j]]);else trPairs.push(r);
     }
     if(ovPairs.length){
-      const d=m=>{const [s,e]=span(m);return `${esc(m.rival)} (${fmt(s)}–${fmt(e)})`};
+      const d=m=>{const [s,e]=span(m);return `${clubTag(m)}${esc(m.rival)} (${fmt(s)}–${fmt(e)})`};
       html+=`<div class="alert"><b>${ALERT}${ovPairs.length===1?'Hay 1 superposición':`Hay ${ovPairs.length} superposiciones`}</b><ul>`+
         ovPairs.map(([a,b])=>`<li>${d(a)} y ${d(b)}${a.coach&&a.coach===b.coach?' — mismo entrenador ('+esc(a.coach)+')':''}</li>`).join('')+`</ul></div>`;
     }
@@ -690,8 +784,8 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
     const evs=list.map(m=>{
       const [s,e]=span(m);const L=lay.get(m.id);const st=status(m,cm);const local=m.side==='L';
       const top=(s-lo*60)*PX,h=Math.max((e-s)*PX,78);
-      const meta=[m.team,m.venue&&('Lugar: '+m.venue)].filter(Boolean).join(' · ');
-      return `<button type="button" class="ev ${st} ${local?'local':'away'}" data-edit="${m.id}" `+
+      const meta=[clubName(m),m.team,m.venue&&('Lugar: '+m.venue)].filter(Boolean).join(' · ');
+      return `<button type="button" class="ev ${st} ${clubCls(m)} ${local?'local':'away'}" data-edit="${m.id}" `+
         `style="top:${top}px;height:${h-2}px;left:calc(${L.col}*100%/${L.cols});width:calc(100%/${L.cols} - 4px)" `+
         `aria-label="${esc((local?'Local':'Visitante')+' '+fmt(s)+' a '+fmt(e)+' '+m.rival+(st==='bad'?', se superpone':st==='warn'?', no da tiempo al trayecto':''))}">`+
         `<span class="l1"><span class="tag">${local?'L':'V'}</span><span class="tm">${fmt(s)}–${fmt(e)}</span>${st!=='ok'?ALERT:''}</span>`+
@@ -705,6 +799,7 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
   function render(){
     const cm=conflictMap();
     renderHead(cm);renderGrid(cm);renderDay(cm);
+    document.getElementById('legNoClub').hidden=!matches.some(m=>!m.club);
   }
 
   /* ---------- navigation ---------- */
@@ -764,9 +859,11 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
     document.getElementById('dlgTitle').textContent=m?'Editar partido':'Nuevo partido';
     delBtn.hidden=!m;
     f.side.value=m?m.side:'L';
+    f.club.value=(m&&m.club)||cfg.lastClub||'SC';
     f.rival.value=m?m.rival:'';
     f.date.value=m?m.date:(dateKey||selected);
     f.time.value=m?m.time:'18:00';
+    if(m&&![...f.dur.options].some(o=>o.value===String(m.dur))){const o=document.createElement('option');o.value=String(m.dur);o.textContent=m.dur+' min';f.dur.appendChild(o);}
     f.dur.value=m?String(m.dur):'120';
     f.venue.value=m?(m.venue||''):'';
     f.coach.value=m?(m.coach||''):'';
@@ -790,7 +887,8 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
       if(!rival)f.rival.focus();
       return;
     }
-    const data={date:f.date.value,time:f.time.value,dur:Number(f.dur.value),rival,side:f.side.value,team:f.team.value.trim(),coach:f.coach.value.trim(),venue:f.venue.value.trim()};
+    const data={date:f.date.value,time:f.time.value,dur:Number(f.dur.value),rival,side:f.side.value,team:f.team.value.trim(),coach:f.coach.value.trim(),venue:f.venue.value.trim(),club:f.club.value||cfg.lastClub||'SC'};
+    cfg.lastClub=data.club;saveCfg();
     if(editing){Object.assign(editing,data);}
     else matches.push(Object.assign({id:uid()},data));
     save();
@@ -889,6 +987,427 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
     });
     saveCfg();tdlg.close();render();
   });
+
+  /* ---------- importar archivos (PDF, CSV, XLSX) ---------- */
+  const idlg=document.getElementById('idlg'),ifile=document.getElementById('ifile'),istatus=document.getElementById('istatus'),iopts=document.getElementById('iopts');
+  const iclubsel=document.getElementById('iclubsel'),itermSC=document.getElementById('itermSC'),itermAM=document.getElementById('itermAM'),idur=document.getElementById('idur'),iyear=document.getElementById('iyear');
+  const isheetwrap=document.getElementById('isheetwrap'),isheet=document.getElementById('isheet');
+  const imapgrid=document.getElementById('imapgrid'),iprev=document.getElementById('iprev'),iadd=document.getElementById('iadd');
+  const imp={raw:[],textMode:false,hdr:null,data:[],W:0,map:{},items:[],year:now.getFullYear(),wb:null,name:''};
+
+  const fold=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+  const MONTHS={ene:1,enero:1,gen:1,gener:1,feb:2,febrero:2,febrer:2,mar:3,marzo:3,marc:3,abr:4,abril:4,may:5,mayo:5,mai:5,maig:5,jun:6,junio:6,juny:6,jul:7,julio:7,juliol:7,ago:8,agosto:8,agost:8,sep:9,sept:9,set:9,septiembre:9,setembre:9,oct:10,octubre:10,nov:11,noviembre:11,novembre:11,dic:12,diciembre:12,des:12,desembre:12};
+  const sepRe=/\s+(?:-|–|—|vs\.?|v\/s|contra)\s+|\s*[–—]\s*/i;
+  const splitTeams=t=>{const p=String(t).split(sepRe).map(x=>x.trim()).filter(Boolean);return p.length>=2?[p[0],p.slice(1).join(' - ')]:null;};
+
+  function loadLib(srcs,check){
+    return new Promise((resolve,reject)=>{
+      let i=0;
+      const next=()=>{
+        if(i>=srcs.length)return reject(new Error('lib'));
+        const src=srcs[i++],el=document.createElement('script');
+        el.src=src;
+        el.onload=()=>check()?resolve(src):next();
+        el.onerror=()=>{el.remove();next();};
+        document.head.appendChild(el);
+      };
+      next();
+    });
+  }
+  async function getXLSX(){
+    if(window.XLSX)return window.XLSX;
+    await loadLib(['lib/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],()=>!!window.XLSX);
+    return window.XLSX;
+  }
+  async function getPDFJS(){
+    if(window.pdfjsLib&&window.pdfjsLib.GlobalWorkerOptions.workerSrc)return window.pdfjsLib;
+    const src=await loadLib(['lib/pdf.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'],()=>!!window.pdfjsLib);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc=src.indexOf('lib/')===0?'lib/pdf.worker.min.js':'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    return window.pdfjsLib;
+  }
+
+  /* --- fechas, horas --- */
+  function validYMD(y,m,d){const dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d;}
+  function parseDateAny(v,defYear){
+    if(v==null||v==='')return null;
+    if(typeof v==='number'){
+      if(v>=20000&&v<80000){
+        const dt=new Date(Date.UTC(1899,11,30)+Math.floor(v)*86400000),frac=v-Math.floor(v);
+        return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate(),mins:frac>0.0001?Math.round(frac*1440):undefined};
+      }
+      return null;
+    }
+    const s=fold(v);let m,r,mins;
+    const tm=s.match(/(\d{1,2}):(\d{2})/);if(tm)mins=(+tm[1])*60+(+tm[2]);
+    if((m=s.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/)))r={y:+m[1],m:+m[2],d:+m[3]};
+    else if((m=s.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){let y=+m[3];if(y<100)y+=2000;r={y,m:+m[2],d:+m[1]};}
+    else if((m=s.match(/(?:^|[^\d:.])(\d{1,2})[-\/](\d{1,2})(?![\d:.\/-])/)))r={y:defYear,m:+m[2],d:+m[1]};
+    else if((m=s.match(/(\d{1,2})\s*(?:de |del |d')?\s*([a-z]{3,10})\.?(?:\s*(?:de |del )?(\d{4}))?/))&&MONTHS[m[2]])r={y:m[3]?+m[3]:defYear,m:MONTHS[m[2]],d:+m[1]};
+    else return null;
+    if(!validYMD(r.y,r.m,r.d))return null;
+    if(mins!=null)r.mins=mins;
+    return r;
+  }
+  function parseTimeAny(v){
+    if(v==null||v==='')return null;
+    if(typeof v==='number'){
+      if(v>0&&v<1)return Math.round(v*1440);
+      if(v>=1&&v<80000&&v%1>0.0001)return Math.round((v%1)*1440);
+      if(Number.isInteger(v)&&v>=6&&v<=23)return v*60;
+      return null;
+    }
+    const s=fold(v);
+    if(!/:/.test(s)&&/\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4}/.test(s))return null;
+    let m=s.match(/(?:^|[^\d])(\d{1,2})\s*[:.h]\s*(\d{2})(?!\d)/);
+    if(m){const h=+m[1],mi=+m[2];if(h<24&&mi<60)return h*60+mi;}
+    m=s.match(/^(\d{1,2})\s*h(?:oras?)?$/);
+    if(m&&+m[1]<24)return (+m[1])*60;
+    return null;
+  }
+
+  /* --- lectura de archivos --- */
+  function decodeText(buf){
+    let t;
+    try{t=new TextDecoder('utf-8',{fatal:true}).decode(buf);}catch(e){t=new TextDecoder('windows-1252').decode(buf);}
+    return t.replace(/^\uFEFF/,'');
+  }
+  function parseCSV(text){
+    const lines=text.split(/\r\n|\n|\r/).filter(l=>l.trim()!=='').slice(0,8);
+    let best=';',bc=-1;
+    [';',',','\t','|'].forEach(d=>{const c=lines.reduce((a,l)=>a+(l.split(d).length-1),0);if(c>bc){bc=c;best=d;}});
+    const rows=[];let row=[],cur='',q=false;
+    for(let i=0;i<text.length;i++){
+      const ch=text[i];
+      if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+      else if(ch==='"')q=true;
+      else if(ch===best){row.push(cur);cur='';}
+      else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur='';}
+      else cur+=ch;
+    }
+    row.push(cur);rows.push(row);
+    return rows.map(r=>r.map(c=>c.trim()));
+  }
+  function sheetRows(name){
+    const ws=imp.wb.Sheets[name];
+    if(!ws||!ws['!ref'])return [];
+    return window.XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  }
+  function pdfLines(items){
+    const its=items.filter(i=>i.str&&i.str.trim()!=='').map(i=>({s:i.str,x:i.transform[4],y:i.transform[5],w:i.width||0}));
+    its.sort((a,b)=>b.y-a.y||a.x-b.x);
+    const lines=[];let cur=null;
+    for(const it of its){
+      if(!cur||Math.abs(cur.y-it.y)>3){cur={y:it.y,items:[]};lines.push(cur);}
+      cur.items.push(it);
+    }
+    return lines.map(l=>{
+      l.items.sort((a,b)=>a.x-b.x);
+      const cells=[];let c=null,lastEnd=0;
+      for(const it of l.items){
+        const gap=it.x-lastEnd;
+        if(!c||gap>7){c={t:it.s.trim()};cells.push(c);}
+        else c.t+=(gap>0.5?' ':'')+it.s.trim();
+        lastEnd=it.x+it.w;
+      }
+      return cells.map(c=>c.t);
+    });
+  }
+  async function readPdf(buf){
+    const lib=await getPDFJS();
+    const doc=await lib.getDocument({data:new Uint8Array(buf)}).promise;
+    const all=[];
+    for(let p=1;p<=doc.numPages;p++){
+      const page=await doc.getPage(p),tc=await page.getTextContent();
+      all.push(...pdfLines(tc.items));
+    }
+    if(!all.length)throw new Error('notext');
+    imp.textMode=all.filter(r=>r.length>=3).length<all.length*0.4;
+    return all;
+  }
+  // Línea de texto suelta -> [fecha, hora, local, visitante, lugar...]
+  function splitLine(t,defYear){
+    let s=String(t),ds='',ts='',m;
+    if((m=s.match(/(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4}|\d{1,2}\/\d{1,2}(?![\d:.\/]))/))&&parseDateAny(m[1],defYear)){ds=m[1];s=s.replace(m[1],' ');}
+    else if((m=s.match(/\d{1,2}\s*(?:de |del |d')?\s*[a-zçA-ZÇ]{3,10}\.?(?:\s*(?:de |del )?\d{4})?/))&&parseDateAny(m[0],defYear)){ds=m[0];s=s.replace(m[0],' ');}
+    if((m=s.match(/(?:^|[^\d])(\d{1,2}\s*[:.h]\s*\d{2})(?!\d)h?/i))&&parseTimeAny(m[1])!=null){ts=m[1];s=s.replace(m[1],' ');}
+    s=s.replace(/\b(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo|dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge)\b\.?/ig,' ').replace(/\s+/g,' ').trim();
+    const parts=s.split(sepRe).map(x=>x.trim()).filter(Boolean);
+    return [ds,ts,...parts];
+  }
+
+  /* --- columnas --- */
+  const FIELDS=[['date','Fecha'],['time','Hora'],['teams','Local - Visitante (en una columna)'],['local','Equipo local'],['visitor','Equipo visitante'],['rival','Rival'],['club','Club'],['side','Condición (local / visitante)'],['venue','Lugar'],['coach','Entrenador'],['team','Equipo o categoría'],['dur','Duración']];
+  function headerField(h){
+    const s=fold(h);if(!s)return null;
+    if(/condicion|localia|\bc\/f\b|\bl\/v\b|casa\/fuera|local\/visit|visit\w*\/local|tipo de partido|^tipo$/.test(s))return 'side';
+    if(/^club$|entidad|entitat/.test(s))return 'club';
+    if(/^(partido|partit|encuentro|enfrentamiento|match|equipos|encontre)\b/.test(s))return 'teams';
+    if(/rival|contrario|oponente|adversari/.test(s))return 'rival';
+    if(/\blocal\b|\bhome\b|\bcasa\b/.test(s))return 'local';
+    if(/visitante|visitant|\baway\b/.test(s))return 'visitor';
+    if(/^(fecha|data|date|dia)\b|fecha del|data del|dia del/.test(s))return 'date';
+    if(/^(hora|horari|horario|time)\b|hora (de )?(inicio|partido|partit)/.test(s))return 'time';
+    if(/duracion|durada|^minutos$|^min$/.test(s))return 'dur';
+    if(/entrenador|entrenadora|tecnico|tecnic|coach|mister/.test(s))return 'coach';
+    if(/lugar|campo|\bcamp\b|pista|pabellon|pavello|instalacion|instal|estadio|venue|ubicacion|direccion|adreca|terreno/.test(s))return 'venue';
+    if(/categoria|competicion|competicio|liga|lliga|grupo|grup|serie|nivel|^equipo$|^equip$/.test(s))return 'team';
+    return null;
+  }
+  function guess(map){
+    const sample=imp.data.slice(0,40);if(!sample.length)return;
+    const sc=[];
+    for(let c=0;c<imp.W;c++){
+      let n=0,d=0,t=0,sp=0,tx=0;
+      sample.forEach(r=>{
+        const v=r[c];if(v===''||v==null)return;n++;
+        const isD=!!parseDateAny(v,imp.year),isT=!isD&&parseTimeAny(v)!=null&&String(v).length<=9;
+        if(isD)d++;else if(isT)t++;
+        else if(typeof v==='string'&&splitTeams(v))sp++;
+        else if(typeof v==='string'&&/[a-zA-Z]/.test(v))tx++;
+      });
+      sc.push({n,d,t,sp,tx});
+    }
+    const used=new Set(Object.values(map).filter(v=>v!==''));
+    const pick=(key,f)=>{
+      let bi=-1,bv=0.5;
+      sc.forEach((o,i)=>{if(used.has(i)||!o.n)return;const r=o[f]/o.n;if(r>=bv){bv=r;bi=i;}});
+      if(bi>=0){map[key]=bi;used.add(bi);}
+    };
+    if(map.date==='')pick('date','d');
+    if(map.time==='')pick('time','t');
+    const noTeams=map.teams===''&&map.local===''&&map.visitor===''&&map.rival==='';
+    if(noTeams)pick('teams','sp');
+    const cand=[];
+    sc.forEach((o,i)=>{if(!used.has(i)&&o.n&&o.tx/o.n>=0.5)cand.push(i);});
+    if(map.teams===''&&map.local===''&&map.visitor===''&&map.rival===''){
+      if(cand.length){map.local=cand.shift();}
+      if(cand.length){map.visitor=cand.shift();}
+    }
+    if(map.venue===''&&cand.length)map.venue=cand.shift();
+  }
+  function colLabel(i){
+    const h=imp.hdr?String(imp.hdr[i]==null?'':imp.hdr[i]).trim():'';
+    const row=imp.data.find(r=>r[i]!==''&&r[i]!=null);
+    const ex=row?String(row[i]).slice(0,18):'';
+    return (h||('Columna '+(i+1)))+(ex?' — '+ex:'');
+  }
+  function renderMap(){
+    imapgrid.innerHTML=FIELDS.map(([k,l])=>`<label class="fld">${l}<select data-k="${k}"><option value="">— no hay —</option>`+
+      Array.from({length:imp.W},(_,i)=>`<option value="${i}"${imp.map[k]===i?' selected':''}>${esc(colLabel(i))}</option>`).join('')+`</select></label>`).join('');
+  }
+  function analyze(){
+    imp.year=Number(iyear.value)||view.y;
+    let rows=(imp.textMode?imp.raw.map(r=>splitLine(r.join(' '),imp.year)):imp.raw).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+    const W=Math.max(1,...rows.map(r=>r.length));
+    rows=rows.map(r=>{const a=r.slice();while(a.length<W)a.push('');return a;});
+    let hi=-1,best=1;
+    const headerScore=r=>{
+      if(r.some(c=>{const t=String(c==null?'':c);return t!==''&&(parseDateAny(c,imp.year)||parseTimeAny(c)!=null);}))return 0;
+      return new Set(r.filter(c=>String(c==null?'':c).length<=30).map(headerField).filter(Boolean)).size;
+    };
+    rows.slice(0,25).forEach((r,i)=>{const sc=headerScore(r);if(sc>best){best=sc;hi=i;}});
+    imp.hdr=hi>=0?rows[hi]:null;
+    imp.data=hi>=0?rows.slice(hi+1):rows;
+    imp.W=W;
+    const map={};FIELDS.forEach(([k])=>{map[k]='';});
+    if(imp.hdr)imp.hdr.forEach((h,i)=>{const f=headerField(h);if(f&&map[f]==='')map[f]=i;});
+    guess(map);
+    imp.map=map;
+    renderMap();
+    document.getElementById('imap').open=!imp.hdr||map.date==='';
+    derive();
+  }
+
+  /* --- filas -> partidos --- */
+  const ymd=d=>`${d.y}-${pad(d.m)}-${pad(d.d)}`;
+  function rowStatus(it){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(it.date))return ['bad','Falta la fecha',false];
+    if(!/^\d{2}:\d{2}$/.test(it.time))return ['bad','Falta la hora',false];
+    if(!String(it.rival).trim())return ['bad','Falta el rival',false];
+    if(matches.some(m=>m.date===it.date&&m.time===it.time&&norm(m.rival)===norm(it.rival)))return ['dup','Ya existe',true];
+    if(!it.club)return ['warn','Elige el club',true];
+    if(it.derby)return ['warn','Entre vuestros dos clubes',true];
+    if(it.unc)return ['warn','Revisa local/visitante',true];
+    return ['ok','Listo',true];
+  }
+  const termsOf=code=>fold(code==='SC'?itermSC.value:itermAM.value).split(/[,;]/).map(x=>x.trim()).filter(Boolean);
+  function derive(){
+    const T={SC:termsOf('SC'),AM:termsOf('AM')};
+    const clubOf=x=>{const f=fold(x);if(!f)return '';for(const c of ['SC','AM'])if(T[c].some(t=>f.includes(t)))return c;return '';};
+    const forced=iclubsel.value;
+    const isF=x=>{const f=fold(x);return !!f&&T[forced].some(t=>f.includes(t));};
+    const defDur=Number(idur.value)||120;
+    const txt=v=>v==null?'':String(v).trim();
+    const cell=(r,k)=>{const i=imp.map[k];return i===''||i==null?'':r[i];};
+    const items=[];let carry=null;
+    imp.data.forEach(r=>{
+      const ne=r.filter(c=>txt(c)!=='');
+      if(!ne.length)return;
+      if(imp.hdr&&r.filter((c,i)=>fold(c)!==''&&fold(c)===fold(imp.hdr[i])).length>=2)return;
+      let pd=parseDateAny(cell(r,'date'),imp.year);
+      if(!pd&&ne.length===1){const c=parseDateAny(ne[0],imp.year);if(c&&c.mins==null){carry={y:c.y,m:c.m,d:c.d};return;}}
+      if(pd)carry={y:pd.y,m:pd.m,d:pd.d};else pd=carry;
+      if(!pd)return;
+      let tm=parseTimeAny(cell(r,'time'));
+      if(tm==null&&pd.mins!=null)tm=pd.mins;
+      let tl='',tv='',rival='',side='',club='',unc=false,derby=false;
+      const teamsV=txt(cell(r,'teams'));
+      if(teamsV){const sp=splitTeams(teamsV);if(sp){tl=sp[0];tv=sp[1];}else rival=teamsV;}
+      if(!tl&&!tv){tl=txt(cell(r,'local'));tv=txt(cell(r,'visitor'));}
+      const sv=fold(cell(r,'side'));let sd='';
+      if(sv){if(/visit|fuera|fora|away|^v$|^f$/.test(sv))sd='V';else if(/local|casa|home|^l$|^c$/.test(sv))sd='L';}
+      const colClub=clubOf(cell(r,'club'));
+      if(tl||tv){
+        if(forced){
+          club=forced;
+          const a=isF(tl),b=isF(tv);
+          if(a&&!b){side='L';rival=tv;}
+          else if(b&&!a){side='V';rival=tl;}
+          else{side=sd||'L';rival=(side==='L'?tv:tl)||tv||tl;unc=!sd;}
+        }else{
+          const cL=clubOf(tl),cV=clubOf(tv);
+          if(cL&&cV){side='L';club=cL;rival=tv;derby=true;}
+          else if(cL){side='L';club=cL;rival=tv;}
+          else if(cV){side='V';club=cV;rival=tl;}
+          else{club=colClub;side=sd||'L';rival=(side==='L'?tv:tl)||tv||tl;unc=!sd;}
+        }
+      }else{
+        rival=txt(cell(r,'rival'))||rival;side=sd||'L';unc=!sd;club=forced||colClub;
+      }
+      if(!rival)return;
+      let dur=defDur;const dn=parseFloat(String(cell(r,'dur')).replace(',','.'));
+      if(dn>0)dur=dn<15?Math.round(dn*60):Math.round(dn);
+      const it={inc:true,date:ymd(pd),time:tm==null?'':fmt(tm),dur,rival,teamL:tl,teamV:tv,side,club,derby,venue:txt(cell(r,'venue')),coach:txt(cell(r,'coach')),team:txt(cell(r,'team')),unc,rivalEdited:false};
+      const st=rowStatus(it);it.inc=st[0]==='ok'||st[0]==='warn';
+      items.push(it);
+    });
+    imp.items=items;
+    renderPreview();
+  }
+
+  /* --- vista previa --- */
+  function updateAdd(){
+    const n=imp.items.filter(it=>it.inc&&rowStatus(it)[2]).length;
+    iadd.disabled=!n;
+    iadd.textContent=n?`Añadir ${n} ${n===1?'partido':'partidos'}`:'Añadir partidos';
+  }
+  function refreshRow(i){
+    const it=imp.items[i],tr=iprev.querySelector(`tr[data-i="${i}"]`);if(!tr)return;
+    const st=rowStatus(it);
+    const td=tr.querySelector('.st');td.className='st '+st[0];td.textContent=st[1];
+    const cb=tr.querySelector('.inc');cb.disabled=!st[2];
+    if(!st[2])it.inc=false;
+    cb.checked=it.inc;tr.classList.toggle('off',!it.inc);
+    updateAdd();
+  }
+  function renderPreview(){
+    if(!imp.items.length){
+      iprev.innerHTML='<p class="hint">No he encontrado partidos con fecha y rival. Revisa las columnas de arriba (sobre todo Fecha, Hora y Equipos) o prueba con otro archivo.</p>';
+      updateAdd();return;
+    }
+    const noClub=imp.items.some(it=>!it.club);
+    iprev.innerHTML=(noClub?'<p class="hint" style="margin-bottom:8px">Algunos partidos no se han podido asignar a un club. Elígelo en la columna Club, o indica arriba "Todos son de…".</p>':'')+
+      `<div class="pscroll"><table class="ptable"><thead><tr><th></th><th>Fecha</th><th>Hora</th><th>Club</th><th>Condición</th><th>Rival</th><th>Lugar</th><th>Entrenador</th><th>Equipo</th><th>Estado</th></tr></thead><tbody>`+
+      imp.items.map((it,i)=>`<tr data-i="${i}"><td><input type="checkbox" class="inc" aria-label="Incluir este partido"></td>`+
+        `<td><input type="date" data-f="date" value="${esc(it.date)}"></td>`+
+        `<td><input type="time" data-f="time" value="${esc(it.time)}"></td>`+
+        `<td><select data-f="club"><option value=""${it.club?'':' selected'}>—</option><option value="SC"${it.club==='SC'?' selected':''}>Sant Celoni</option><option value="AM"${it.club==='AM'?' selected':''}>Arenys de Mar</option></select></td>`+
+        `<td><select data-f="side"><option value="L"${it.side==='L'?' selected':''}>Local</option><option value="V"${it.side==='V'?' selected':''}>Visitante</option></select></td>`+
+        `<td><input type="text" data-f="rival" value="${esc(it.rival)}"></td>`+
+        `<td><input type="text" data-f="venue" value="${esc(it.venue)}"></td>`+
+        `<td><input type="text" data-f="coach" value="${esc(it.coach)}"></td>`+
+        `<td><input type="text" data-f="team" value="${esc(it.team)}"></td>`+
+        `<td class="st"></td></tr>`).join('')+`</tbody></table></div>`;
+    imp.items.forEach((_,i)=>refreshRow(i));
+  }
+  iprev.addEventListener('input',e=>{
+    const tr=e.target.closest('tr[data-i]'),f=e.target.dataset.f;if(!tr||!f||e.target.tagName==='SELECT')return;
+    const i=+tr.dataset.i,it=imp.items[i];
+    it[f]=e.target.value;
+    if(f==='rival')it.rivalEdited=true;
+    if(f==='date'||f==='time'||f==='rival'){if(rowStatus(it)[2]&&!it.inc&&rowStatus(it)[0]!=='dup')it.inc=true;}
+    refreshRow(i);
+  });
+  iprev.addEventListener('change',e=>{
+    const tr=e.target.closest('tr[data-i]');if(!tr)return;
+    const i=+tr.dataset.i,it=imp.items[i];
+    if(e.target.classList.contains('inc')){it.inc=e.target.checked;refreshRow(i);return;}
+    if(e.target.dataset.f==='club'){it.club=e.target.value;it.derby=false;refreshRow(i);return;}
+    if(e.target.dataset.f==='side'){
+      it.side=e.target.value;it.unc=false;
+      if(!it.rivalEdited&&(it.teamL||it.teamV)){it.rival=(it.side==='L'?it.teamV:it.teamL)||it.rival;tr.querySelector('[data-f="rival"]').value=it.rival;}
+      refreshRow(i);
+    }
+  });
+
+  /* --- diálogo --- */
+  function importError(e){
+    const m=String(e&&e.message||'');
+    if(m==='lib')return 'No se ha podido cargar el lector de archivos. Hace falta conexión la primera vez; después queda guardado.';
+    if(m==='notext')return 'Este PDF no tiene texto que se pueda leer (parece una imagen escaneada). Prueba con un CSV, un Excel o un PDF con texto.';
+    return 'No he podido leer este archivo. Comprueba que es un PDF, CSV o XLSX válido.';
+  }
+  async function loadFile(file){
+    if(!file)return;
+    imp.name=file.name;iopts.hidden=true;isheetwrap.hidden=true;
+    istatus.hidden=false;istatus.className='fmsg';istatus.textContent='Leyendo '+file.name+'…';
+    try{
+      const nm=file.name.toLowerCase(),buf=await file.arrayBuffer();
+      imp.textMode=false;imp.wb=null;
+      iyear.value=iyear.value||view.y;
+      if(/\.pdf$/.test(nm)||file.type==='application/pdf'){
+        imp.raw=await readPdf(buf);
+      }else if(/\.(xlsx|xls|xlsm|ods)$/.test(nm)){
+        const X=await getXLSX();
+        imp.wb=X.read(buf,{type:'array'});
+        isheet.innerHTML=imp.wb.SheetNames.map((n,i)=>`<option value="${i}">${esc(n)}</option>`).join('');
+        isheetwrap.hidden=imp.wb.SheetNames.length<2;
+        imp.raw=sheetRows(imp.wb.SheetNames[0]);
+      }else{
+        imp.raw=parseCSV(decodeText(buf));
+      }
+      iopts.hidden=false;
+      analyze();
+      istatus.className='fmsg';
+      istatus.textContent=`${file.name}: ${imp.items.length} ${imp.items.length===1?'partido detectado':'partidos detectados'}. Revísalos antes de añadirlos.`;
+    }catch(e){
+      istatus.className='fmsg err';istatus.textContent=importError(e);iopts.hidden=true;
+    }
+  }
+  function openImport(file){
+    if(!idlg.open){
+      itermSC.value=cfg.terms.SC;itermAM.value=cfg.terms.AM;iclubsel.value='';iyear.value=view.y;ifile.value='';
+      iopts.hidden=true;istatus.hidden=true;imp.items=[];updateAdd();
+      if(typeof idlg.showModal==='function')idlg.showModal();else idlg.setAttribute('open','');
+    }
+    if(file)loadFile(file);
+  }
+  document.getElementById('importBtn').onclick=()=>openImport();
+  document.getElementById('icancel').onclick=()=>{if(idlg.open)idlg.close();};
+  idlg.addEventListener('click',e=>{if(e.target===idlg)idlg.close();});
+  ifile.addEventListener('change',()=>loadFile(ifile.files[0]));
+  isheet.addEventListener('change',()=>{imp.raw=sheetRows(imp.wb.SheetNames[Number(isheet.value)]);analyze();});
+  imapgrid.addEventListener('change',e=>{const k=e.target.dataset.k;if(!k)return;imp.map[k]=e.target.value===''?'':Number(e.target.value);derive();});
+  [itermSC,itermAM,iclubsel].forEach(el=>el.addEventListener('change',derive));
+  idur.addEventListener('change',derive);
+  iyear.addEventListener('change',()=>{if(imp.raw.length)analyze();});
+  ['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>{
+    if(!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;
+    e.preventDefault();
+    if(ev==='drop'&&e.dataTransfer.files[0])openImport(e.dataTransfer.files[0]);
+  }));
+  iadd.onclick=async()=>{
+    const sel=imp.items.filter(it=>it.inc&&rowStatus(it)[2]);
+    if(!sel.length)return;
+    cfg.terms={SC:itermSC.value.trim()||'Sant Celoni',AM:itermAM.value.trim()||'Arenys'};saveCfg();
+    sel.forEach(it=>matches.push({id:uid(),date:it.date,time:it.time,dur:it.dur,rival:String(it.rival).trim(),side:it.side,team:it.team,coach:it.coach,venue:it.venue,club:it.club}));
+    save();
+    const days=[...new Set(sel.map(x=>x.date))].sort();
+    const d=fromKey(days[0]);view={y:d.getFullYear(),m:d.getMonth()};selected=days[0];
+    idlg.close();render();
+    say(`${sel.length} ${sel.length===1?'partido añadido':'partidos añadidos'} al calendario.`,'ok',4000);
+    for(const dk of days)await ensureDay(dk);
+  };
 
   /* ---------- eventos ---------- */
   document.addEventListener('click',e=>{
