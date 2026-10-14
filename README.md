@@ -19,7 +19,7 @@ Funciona sin conexión y guarda los datos en el propio móvil.
 ## Actualizar la app
 
 Cuando cambies `index.html`, sube también `sw.js` con el número de versión subido
-(`partidos-v6` > `partidos-v7`) para que los móviles recojan la actualización.
+(`partidos-v7` > `partidos-v8`) para que los móviles recojan la actualización.
 
 ## Importante
 
@@ -60,3 +60,10 @@ Si borras los datos del navegador, se pierden.
 - Los partidos que no tienen club asignado salen en gris (puedes asignarles club al editarlos).
 - Al importar, elige "Todos son de…" o deja "Detectar por el nombre del equipo". Los nombres con los que
   aparece cada club en los archivos se pueden cambiar en "Cómo se reconocen los clubes en los archivos".
+
+## Móvil, tableta y ordenador
+
+- **Ordenador:** calendario a la izquierda y detalle del día a la derecha.
+- **Móvil y tableta:** el calendario ocupa toda la pantalla y, al tocar un día, el detalle sube como una hoja
+  desde abajo (con la lista de partidos y las horas). Se cierra con la ✕, tocando fuera o con Esc.
+- En el móvil los botones principales (Importar, Trayectos, Nuevo partido) están en una barra fija abajo.

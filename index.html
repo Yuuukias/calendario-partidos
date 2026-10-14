@@ -147,7 +147,8 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
   .chips{flex-direction:row;flex-wrap:wrap}
   .chip{width:auto;padding:2px;gap:0}
   .chip .ct,.chip .t,.chip .rv,.chip svg{display:none}
-  .tag{width:20px;height:20px}
+  .chip{width:28px;height:28px;padding:0;justify-content:center;align-items:center}
+  .chip .tag{background:transparent!important;color:inherit!important;width:auto;height:auto;font-size:15px}
   .cbadge{padding:1px 5px;font-size:11px}
   .cbadge svg{display:none}
   .dn{width:24px;height:24px;font-size:17px}
@@ -245,6 +246,64 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
 .ptable tr.off td:not(:first-child):not(.st){opacity:.55}
 .foot{margin-top:22px;text-align:center;font-size:12.5px;color:var(--muted)}
 .foot button{background:none;border:0;color:var(--muted);text-decoration:underline;padding:4px}
+/* ---------- Adaptable: móvil, tableta y ordenador ---------- */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.actionbar{display:flex;gap:8px;flex-wrap:wrap}
+.btns{display:flex;gap:8px;align-items:flex-start}
+.sheetclose,.sheetbd{display:none}
+.daypanel:focus{outline:none}
+dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+@media (max-width:999px){
+  .daypanel{position:fixed;left:0;right:0;bottom:0;max-height:88vh;max-height:88dvh;overflow:auto;border-radius:18px 18px 0 0;border-bottom:0;z-index:30;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(105%);visibility:hidden;
+    transition:transform .22s ease,visibility 0s linear .22s;box-shadow:0 -10px 40px rgba(0,0,0,.28)}
+  body.sheet-open .daypanel{transform:none;visibility:visible;transition:transform .22s ease}
+  body.sheet-open .sheetbd{display:block;position:fixed;inset:0;background:rgba(8,14,26,.5);z-index:29}
+  .sheetclose{display:inline-grid;place-items:center}
+}
+@media (max-width:720px){
+  .app{padding:12px 12px calc(92px + env(safe-area-inset-bottom,0px))}
+  header.top{margin-bottom:10px;gap:6px}
+  .toolbar{width:100%;justify-content:space-between}
+  .actionbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:8px}
+  .actionbar .btn{min-height:46px;padding:0 8px}
+  .btn{min-height:44px}
+  .btn.icon{width:44px}
+  input[type=text],input[type=date],input[type=time],input[type=number],select{font-size:16px;min-height:44px}
+  .ptable input[type=text],.ptable input[type=date],.ptable input[type=time],.ptable select{font-size:16px;min-height:38px}
+  .legend{gap:8px 16px;padding:8px 10px;font-size:12.5px}
+  .stats{gap:6px 16px}
+  .stat b{font-size:24px}
+  dialog{width:calc(100% - 16px);border-radius:14px}
+  form{padding:16px}
+  .dtitle{font-size:26px}
+}
+@media (min-width:1500px){.app{max-width:1440px}}
+.dlist{display:none;flex-direction:column;gap:9px;margin-top:12px}
+.dcard{--bd:var(--gr-d);--bl:var(--gr-l);display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--bd);border-left-width:8px;border-radius:10px;padding:9px 11px;background:var(--surface2);font-size:14px;line-height:1.3}
+.dcard.sc{--bd:var(--sc-d);--bl:var(--sc-l)} .dcard.am{--bd:var(--ar-d);--bl:var(--ar-l)}
+.dcard.bad{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ov-fill)}
+.dcard.warn{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--warn-fill)}
+.dcard.local .tag{background:var(--bd);color:var(--on-d)}
+.dcard.away .tag{background:var(--bl);color:var(--on-l);border:1.5px solid var(--bd)}
+.dcard .dc{display:flex;flex-direction:column;gap:1px;min-width:0}
+.dcard .dc b{font-size:15px}
+.dcard .dc span{color:var(--muted)}
+.dcard .dx{font-weight:700}
+.dcard.bad .dx{color:var(--ov-text)} .dcard.warn .dx{color:var(--warn-fill)}
+@media (max-width:999px){.dlist{display:flex}}
+@media (max-width:720px){
+  h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px}
+  .nav{width:100%;flex-wrap:nowrap}
+  .monthname{flex:1;min-width:0;font-size:22px}
+  .stats{flex-wrap:nowrap;overflow-x:auto;gap:18px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .stat{flex:none}
+  .stat span{white-space:nowrap}
+  .legend{gap:6px 14px}
+  .legend .grp{gap:8px}
+  .sw{width:13px;height:13px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -252,14 +311,18 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
 <div class="app">
   <header class="top">
     <h1>Partidos</h1>
-    <div class="nav">
-      <button class="btn icon" id="prev" aria-label="Mes anterior">‹</button>
-      <div class="monthname" id="monthname" aria-live="polite"></div>
-      <button class="btn icon" id="next" aria-label="Mes siguiente">›</button>
-      <button class="btn" id="today">Hoy</button>
-      <button class="btn" id="importBtn">Importar</button>
-      <button class="btn" id="travelBtn">Trayectos</button>
-      <button class="btn primary" id="add">Nuevo partido</button>
+    <div class="toolbar">
+      <div class="nav">
+        <button class="btn icon" id="prev" aria-label="Mes anterior">‹</button>
+        <div class="monthname" id="monthname" aria-live="polite"></div>
+        <button class="btn icon" id="next" aria-label="Mes siguiente">›</button>
+        <button class="btn" id="today">Hoy</button>
+      </div>
+      <div class="actionbar">
+        <button class="btn" id="importBtn">Importar</button>
+        <button class="btn" id="travelBtn">Trayectos</button>
+        <button class="btn primary" id="add">Nuevo partido</button>
+      </div>
     </div>
   </header>
 
@@ -284,9 +347,10 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
       <div class="dow" id="dow"></div>
       <div class="grid" id="grid" role="grid"></div>
     </section>
-    <aside class="daypanel" id="day" aria-live="polite"></aside>
+    <aside class="daypanel" id="day" aria-live="polite" tabindex="-1"></aside>
   </div>
 
+  <div class="sheetbd" id="sheetbd"></div>
   <div class="foot"><button id="reset" type="button">Borrar todos los partidos</button></div>
 </div>
 
@@ -744,7 +808,7 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
     const nL=list.filter(m=>m.side==='L').length,nV=list.length-nL;
     const sub=list.length?`${list.length} ${list.length===1?'partido':'partidos'}: ${nL} ${nL===1?'local':'locales'}, ${nV} ${nV===1?'visitante':'visitantes'}`:'Sin partidos programados';
     let html=`<div class="dhead"><div><h2 class="dtitle">${esc(cap(fmtDay.format(dt)))}</h2><p class="dsub">${sub}</p></div>`+
-      `<button type="button" class="btn primary" data-add="${selected}">Añadir</button></div>`;
+      `<div class="btns"><button type="button" class="btn primary" data-add="${selected}">Añadir</button><button type="button" class="btn icon sheetclose" data-close-day aria-label="Cerrar el detalle del día">✕</button></div></div>`;
 
     if(!list.length){
       html+=`<div class="empty"><p>No hay partidos este día.</p><button type="button" class="btn" data-add="${selected}">Añadir un partido</button></div>`;
@@ -792,6 +856,16 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
         `<span class="rv">${esc(m.rival)}</span>`+
         `${m.coach?`<span class="mt">Entrenador: ${esc(m.coach)}</span>`:''}${meta?`<span class="mt">${esc(meta)}</span>`:''}</button>`;
     }).join('');
+    html+=`<div class="dlist">`+list.map(m=>{
+      const st=status(m,cm),local=m.side==='L',[s0,e0]=span(m),cross=crossText(m,cm);
+      const l2=[clubName(m),m.team].filter(Boolean).join(' · ');
+      return `<button type="button" class="dcard ${st} ${clubCls(m)} ${local?'local':'away'}" data-edit="${m.id}">`+
+        `<span class="tag">${local?'L':'V'}</span><span class="dc"><b>${fmt(s0)}–${fmt(e0)} ${esc(m.rival)}</b>`+
+        `<span>${esc(l2)}</span>`+
+        (m.coach?`<span>Entrenador: ${esc(m.coach)}</span>`:'')+
+        (m.venue?`<span>Lugar: ${esc(m.venue)}</span>`:'')+
+        (cross?`<span class="dx">${esc(cross)}</span>`:'')+`</span></button>`;
+    }).join('')+`</div>`;
     html+=`<div class="tl" style="height:${(hi-lo)*HOUR}px">${lines}<div class="evs">${evs}</div></div>`;
     document.getElementById('day').innerHTML=html;
   }
@@ -1409,8 +1483,18 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
     for(const dk of days)await ensureDay(dk);
   };
 
+  /* ---------- hoja del día (móvil y tableta) ---------- */
+  const narrowMQ=window.matchMedia('(max-width:999px)');
+  const isNarrow=()=>narrowMQ.matches;
+  function openSheet(){document.body.classList.add('sheet-open');const d=document.getElementById('day');d.scrollTop=0;try{d.focus({preventScroll:true});}catch(e){}}
+  function closeSheet(){document.body.classList.remove('sheet-open');}
+  const onMQ=()=>{if(!isNarrow())closeSheet();};
+  if(narrowMQ.addEventListener)narrowMQ.addEventListener('change',onMQ);else if(narrowMQ.addListener)narrowMQ.addListener(onMQ);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('sheet-open')&&!document.querySelector('dialog[open]'))closeSheet();});
+
   /* ---------- eventos ---------- */
   document.addEventListener('click',e=>{
+    if(e.target.closest('[data-close-day]')||e.target.id==='sheetbd'){closeSheet();return;}
     const ed=e.target.closest('[data-edit]');
     if(ed){e.stopPropagation();const m=matches.find(x=>x.id===ed.dataset.edit);if(m){selected=m.date;openDialog(m);}return;}
     const ad=e.target.closest('[data-add]');
@@ -1421,7 +1505,8 @@ details.box summary{cursor:pointer;font-family:var(--font-d);font-weight:600;fon
       const d=fromKey(selected);
       if(d.getMonth()!==view.m||d.getFullYear()!==view.y)view={y:d.getFullYear(),m:d.getMonth()};
       render();ensureDay(selected);
-      const again=document.querySelector(`[data-day="${selected}"]`);if(again)again.focus({preventScroll:true});
+      if(isNarrow())openSheet();
+      else{const again=document.querySelector(`[data-day="${selected}"]`);if(again)again.focus({preventScroll:true});}
     }
   });
   document.getElementById('grid').addEventListener('keydown',e=>{
