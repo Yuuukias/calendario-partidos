@@ -20,6 +20,7 @@
   --bg:#EDF1F5; --surface:#FFFFFF; --surface2:#F5F7FA; --ink:#101B2D; --muted:#5B677A; --line:#D5DCE6;
   --ok-fill:#12805C; --ok-soft:rgba(18,128,92,.26);
   --bad-fill:#D6293E; --bad-soft:rgba(214,41,62,.26); --bad-tint:#FBE9EC;
+  --warn-fill:#A85F00; --warn-soft:rgba(168,95,0,.28); --warn-tint:#FFF1DA;
   --on-fill:#FFFFFF; --focus:#2F5BEA; --primary:#16284A; --on-primary:#FFFFFF;
   --font-d:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
   --font-b:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -32,6 +33,7 @@
     --bg:#0E1522; --surface:#172133; --surface2:#1E2A40; --ink:#E8EDF5; --muted:#93A0B5; --line:#2A374D;
     --ok-fill:#38C493; --ok-soft:rgba(56,196,147,.30);
     --bad-fill:#FF5C6E; --bad-soft:rgba(255,92,110,.30); --bad-tint:#2D1B25;
+    --warn-fill:#F2A93B; --warn-soft:rgba(242,169,59,.30); --warn-tint:#33270F;
     --on-fill:#0B1220; --focus:#7C9BFF; --primary:#E8EDF5; --on-primary:#0E1522;
   }
 }
@@ -40,6 +42,7 @@
   --bg:#0E1522; --surface:#172133; --surface2:#1E2A40; --ink:#E8EDF5; --muted:#93A0B5; --line:#2A374D;
   --ok-fill:#38C493; --ok-soft:rgba(56,196,147,.30);
   --bad-fill:#FF5C6E; --bad-soft:rgba(255,92,110,.30); --bad-tint:#2D1B25;
+  --warn-fill:#F2A93B; --warn-soft:rgba(242,169,59,.30); --warn-tint:#33270F;
   --on-fill:#0B1220; --focus:#7C9BFF; --primary:#E8EDF5; --on-primary:#0E1522;
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -52,7 +55,7 @@ button{cursor:pointer}
 
 .app{max-width:1280px;margin:0 auto;padding:20px 16px 40px}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px;margin-bottom:16px}
-h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;margin:0;letter-spacing:-.01em;text-transform:none}
+h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;margin:0;letter-spacing:-.01em}
 .nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .monthname{font-family:var(--font-d);font-weight:600;font-size:30px;min-width:170px;text-align:center;padding:0 4px}
 .btn{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;font-weight:600;line-height:1}
@@ -67,33 +70,37 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .legend .gt{font-weight:600;color:var(--muted)}
 .legend .it{display:inline-flex;align-items:center;gap:6px}
 .sw{width:16px;height:16px;border-radius:4px;display:inline-block}
-.sw.ok{background:var(--ok-fill)} .sw.bad{background:var(--bad-fill)}
+.sw.ok{background:var(--ok-fill)} .sw.bad{background:var(--bad-fill)} .sw.warn{background:var(--warn-fill)}
 
 .stats{display:flex;gap:22px;flex-wrap:wrap;margin:0 0 14px}
 .stat{display:flex;align-items:baseline;gap:7px}
 .stat b{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1}
 .stat span{color:var(--muted);font-size:13.5px}
 .stat.warn b{color:var(--bad-fill)}
+.stat.travel b{color:var(--warn-fill)}
 
 .layout{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
-@media (min-width:1000px){ .layout{grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);align-items:start} .daypanel{position:sticky;top:12px} }
+@media (min-width:1000px){ .layout{grid-template-columns:minmax(0,2.1fr) minmax(320px,1fr);align-items:start} .daypanel{position:sticky;top:12px} }
 
 /* ---------- Month grid ---------- */
 .cal{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--surface2);border-bottom:1px solid var(--line)}
 .dow div{padding:8px 8px;font-weight:600;font-size:13px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
-.cell{min-height:132px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;gap:4px;background:var(--surface);position:relative;text-align:left}
+.cell{min-height:140px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;gap:4px;background:var(--surface);position:relative;text-align:left}
 .cell:nth-child(7n){border-right:0}
 .cell.other{background:var(--surface2)}
 .cell.other .dn{color:var(--muted);opacity:.7}
+.cell.has-warn{background:var(--warn-tint)}
 .cell.has-bad{background:var(--bad-tint)}
 .cell.sel{outline:3px solid var(--focus);outline-offset:-3px}
 .cell:hover{filter:brightness(.985)}
-.ctop{display:flex;align-items:center;justify-content:space-between;min-height:24px}
+.ctop{display:flex;align-items:center;justify-content:space-between;min-height:24px;gap:4px}
 .dn{font-family:var(--font-d);font-weight:600;font-size:19px;line-height:1;width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
 .cell.today .dn{background:var(--ink);color:var(--surface)}
+.badges{display:flex;gap:4px}
 .cbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bad-fill);color:var(--on-fill);border-radius:999px;padding:2px 7px 2px 5px;font-size:12px;font-weight:700}
+.cbadge.warn{background:var(--warn-fill)}
 .cbadge svg{width:12px;height:12px}
 .chips{display:flex;flex-direction:column;gap:3px;min-width:0}
 .more{font-size:12px;color:var(--muted);font-weight:600;padding-left:2px}
@@ -101,6 +108,7 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 /* ---------- Match chip / event (shared look) ---------- */
 .chip,.ev{--f:var(--ok-fill);--on:var(--on-fill);--soft:var(--ok-soft)}
 .chip.bad,.ev.bad{--f:var(--bad-fill);--soft:var(--bad-soft)}
+.chip.warn,.ev.warn{--f:var(--warn-fill);--soft:var(--warn-soft)}
 .chip.neutral{--f:var(--ink);--on:var(--surface);--soft:rgba(128,140,160,.30)}
 .chip,.ev{border:1.5px solid var(--f);border-radius:7px}
 .chip.local,.ev.local{background:var(--f);color:var(--on)}
@@ -114,9 +122,10 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .chip svg{width:12px;height:12px;flex:none;margin-left:auto;margin-top:2px}
 .chip .ct{display:flex;flex-direction:column;min-width:0;flex:1}
 .chip .l1{display:flex;gap:5px;min-width:0}
-.chip .co{font-size:11.5px;font-weight:500;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chip .cx{font-size:11px;font-weight:700;white-space:normal;line-height:1.15;margin-top:1px}
-.chip.away .cx{color:var(--bad-fill)}
+.chip .co,.chip .vn{font-size:11px;font-weight:500;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .cx{font-size:10.5px;font-weight:700;white-space:normal;line-height:1.15;margin-top:1px}
+.chip.away.bad .cx{color:var(--bad-fill)}
+.chip.away.warn .cx{color:var(--warn-fill)}
 
 @media (max-width:640px){
   .cell{min-height:76px;padding:4px 3px}
@@ -126,6 +135,7 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
   .chip .ct,.chip .t,.chip .rv,.chip svg{display:none}
   .tag{width:20px;height:20px}
   .cbadge{padding:1px 5px;font-size:11px}
+  .cbadge svg{display:none}
   .dn{width:24px;height:24px;font-size:17px}
   h1{font-size:36px}
   .monthname{font-size:26px;min-width:140px}
@@ -138,9 +148,13 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .dsub{color:var(--muted);font-size:13.5px;margin:4px 0 0}
 .alert{background:var(--bad-tint);border:1.5px solid var(--bad-fill);border-radius:10px;padding:9px 12px;margin:12px 0 4px;font-size:13.5px}
 .alert b{color:var(--bad-fill);display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.alert.warn{background:var(--warn-tint);border-color:var(--warn-fill)}
+.alert.warn b{color:var(--warn-fill)}
 .alert svg{width:15px;height:15px}
-.alert ul{margin:4px 0 0;padding-left:18px}
+.alert ul,.okmsg ul{margin:4px 0 0;padding-left:18px}
+.alert li,.okmsg li{margin-bottom:3px}
 .okmsg{background:color-mix(in srgb,var(--ok-fill) 12%,var(--surface));border:1.5px solid var(--ok-fill);border-radius:10px;padding:9px 12px;margin:12px 0 4px;font-size:13.5px;font-weight:500}
+.okmsg b{display:block;margin-bottom:2px}
 .tl{position:relative;margin-top:14px}
 .hl{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
 .hl span{position:absolute;left:0;top:-9px;background:var(--surface);padding-right:6px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -150,19 +164,22 @@ h1{font-family:var(--font-d);font-weight:700;font-size:44px;line-height:.95;marg
 .ev .l1 .tm{font-variant-numeric:tabular-nums}
 .ev .l1 svg{width:13px;height:13px;margin-left:auto;flex:none}
 .ev .rv{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev .mt{opacity:.9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .mt{opacity:.92;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .empty{border:1.5px dashed var(--line);border-radius:12px;padding:26px 16px;text-align:center;color:var(--muted);margin-top:14px}
 .empty p{margin:0 0 12px}
 
-/* ---------- Dialog ---------- */
-dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:0;width:min(460px,calc(100% - 24px));box-shadow:0 20px 60px rgba(0,0,0,.35)}
+/* ---------- Dialogs ---------- */
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:0;width:min(480px,calc(100% - 24px));box-shadow:0 20px 60px rgba(0,0,0,.35)}
 dialog::backdrop{background:rgba(8,14,26,.55)}
 form{padding:20px;display:flex;flex-direction:column;gap:14px}
 form h2{font-family:var(--font-d);font-size:28px;margin:0;font-weight:700;line-height:1}
+.hint{margin:0;color:var(--muted);font-size:13.5px}
 .fld{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:13.5px}
 .fld small{font-weight:400;color:var(--muted)}
-input[type=text],input[type=date],input[type=time],select{border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 11px;width:100%;font-weight:400;font-size:15px}
+input[type=text],input[type=date],input[type=time],input[type=number],select{border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 11px;width:100%;font-weight:400;font-size:15px}
 input:focus,select:focus{border-color:var(--focus)}
+.chk{display:flex;gap:9px;align-items:flex-start;font-size:14px;font-weight:500}
+.chk input{width:18px;height:18px;margin-top:2px;flex:none}
 .row{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px}
 @media (max-width:460px){.row{grid-template-columns:1fr 1fr}.row .fld:first-child{grid-column:1/-1}}
 fieldset{border:0;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -176,10 +193,23 @@ input:checked + .segopt.local .tag{background:var(--surface);color:var(--ink)}
 input:checked + .segopt.away{background:repeating-linear-gradient(135deg,rgba(128,140,160,.35) 0 4px,transparent 4px 9px),var(--surface);border-color:var(--ink)}
 input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
 .fmsg{min-height:44px;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:500;background:color-mix(in srgb,var(--ok-fill) 12%,var(--surface));border:1.5px solid var(--ok-fill)}
-.fmsg.bad{background:var(--bad-tint);border-color:var(--bad-fill)}
-.fmsg.err{background:var(--bad-tint);border-color:var(--bad-fill)}
+.fmsg.bad,.fmsg.err{background:var(--bad-tint);border-color:var(--bad-fill)}
+.fmsg.warn{background:var(--warn-tint);border-color:var(--warn-fill)}
 .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .actions .sp{flex:1}
+.pairs{display:flex;flex-direction:column;gap:8px;max-height:42vh;overflow:auto;padding:2px}
+.pair{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;font-size:14px;font-weight:500}
+.pair input{padding:8px 9px}
+.netmsg{border-radius:10px;padding:9px 12px;margin:0 0 14px;font-size:13.5px;font-weight:500;background:var(--surface);border:1.5px solid var(--line)}
+.netmsg.ok{border-color:var(--ok-fill);background:color-mix(in srgb,var(--ok-fill) 12%,var(--surface))}
+.netmsg.bad{border-color:var(--warn-fill);background:var(--warn-tint)}
+#tdlg form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+.box{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface2)}
+.box>b{font-family:var(--font-d);font-size:19px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pair small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.fmsg b{font-weight:700}
+a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
 .foot{margin-top:22px;text-align:center;font-size:12.5px;color:var(--muted)}
 .foot button{background:none;border:0;color:var(--muted);text-decoration:underline;padding:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -194,6 +224,7 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
       <div class="monthname" id="monthname" aria-live="polite"></div>
       <button class="btn icon" id="next" aria-label="Mes siguiente">›</button>
       <button class="btn" id="today">Hoy</button>
+      <button class="btn" id="travelBtn">Trayectos</button>
       <button class="btn primary" id="add">Nuevo partido</button>
     </div>
   </header>
@@ -201,15 +232,17 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
   <div class="legend" aria-label="Leyenda">
     <div class="grp"><span class="gt">Color</span>
       <span class="it"><span class="sw ok"></span>Sin conflicto</span>
-      <span class="it"><span class="sw bad"></span>Se superpone con otro</span>
+      <span class="it"><span class="sw bad"></span>Se superpone</span>
+      <span class="it"><span class="sw warn"></span>No da tiempo al trayecto</span>
     </div>
     <div class="grp"><span class="gt">Condición</span>
-      <span class="it"><span class="chip local neutral" style="width:auto;padding:2px 8px 2px 3px"><span class="tag">L</span>Local (relleno)</span></span>
-      <span class="it"><span class="chip away neutral" style="width:auto;padding:2px 8px 2px 3px"><span class="tag">V</span>Visitante (rayado)</span></span>
+      <span class="it"><span class="chip local neutral" style="width:auto;padding:2px 8px 2px 3px;align-items:center"><span class="tag">L</span>Local (relleno)</span></span>
+      <span class="it"><span class="chip away neutral" style="width:auto;padding:2px 8px 2px 3px;align-items:center"><span class="tag">V</span>Visitante (rayado)</span></span>
     </div>
   </div>
 
   <div class="stats" id="stats"></div>
+  <div id="netmsg" class="netmsg" role="status" hidden></div>
 
   <div class="layout">
     <section class="cal" aria-label="Calendario mensual">
@@ -222,6 +255,7 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
   <div class="foot"><button id="reset" type="button">Borrar todos los partidos</button></div>
 </div>
 
+<!-- Partido -->
 <dialog id="dlg" aria-labelledby="dlgTitle">
   <form id="f" novalidate>
     <h2 id="dlgTitle">Nuevo partido</h2>
@@ -243,11 +277,12 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
         </select>
       </label>
     </div>
+    <label class="fld">Lugar del partido <small>(nombre o dirección, con el pueblo)</small>
+      <input type="text" name="venue" maxlength="40" placeholder="Ej. Campo municipal" list="venues" autocomplete="off">
+      <datalist id="venues"></datalist>
+    </label>
     <label class="fld">Entrenador<input type="text" name="coach" maxlength="40" placeholder="Nombre del entrenador"></label>
-    <div class="row" style="grid-template-columns:1fr 1fr">
-      <label class="fld">Equipo <small>(opcional)</small><input type="text" name="team" maxlength="30" placeholder="Ej. Sub-14"></label>
-      <label class="fld">Lugar <small>(opcional)</small><input type="text" name="venue" maxlength="40" placeholder="Ej. Campo municipal"></label>
-    </div>
+    <label class="fld">Equipo <small>(opcional)</small><input type="text" name="team" maxlength="30" placeholder="Ej. Sub-14"></label>
     <div class="fmsg" id="fmsg" aria-live="polite"></div>
     <div class="actions">
       <button type="button" class="btn danger" id="del" hidden>Eliminar</button>
@@ -258,9 +293,48 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
   </form>
 </dialog>
 
+<!-- Trayectos -->
+<dialog id="tdlg" aria-labelledby="tTitle">
+  <form id="tf" novalidate>
+    <h2 id="tTitle">Trayectos entre lugares</h2>
+    <p class="hint">La app calcula el tiempo en coche entre dos lugares con datos de OpenStreetMap. Necesita conexión; los trayectos calculados se guardan y después funcionan sin conexión.</p>
+
+    <div class="box">
+      <b>Calcular un trayecto</b>
+      <label class="fld">Lugar de origen<input type="text" name="torig" list="tvenues" placeholder="Ej. Campo municipal, Sant Celoni" autocomplete="off"></label>
+      <label class="fld">Lugar de destino<input type="text" name="tdest" list="tvenues" placeholder="Ej. Estadio del Valle, Granollers" autocomplete="off"></label>
+      <div class="actions"><button type="button" class="btn primary" id="tcalc">Calcular trayecto</button></div>
+      <div class="fmsg" id="tres" hidden aria-live="polite"></div>
+      <datalist id="tvenues"></datalist>
+    </div>
+
+    <div class="box">
+      <b>Ajustes</b>
+      <label class="fld">Pueblo o ciudad habitual <small>(se añade a los lugares que no lo llevan)</small>
+        <input type="text" name="area" maxlength="60" placeholder="Ej. Sant Celoni" autocomplete="off"></label>
+      <div class="row2">
+        <label class="fld">Margen extra (min)<input type="number" name="buffer" min="0" max="120" step="5" inputmode="numeric"></label>
+        <label class="fld">Si no se conoce (min)<input type="number" name="def" min="0" max="300" step="5" inputmode="numeric"></label>
+      </div>
+    </div>
+
+    <div class="box">
+      <b>Trayectos entre los lugares de tus partidos</b>
+      <button type="button" class="btn" id="tall">Calcular los que faltan</button>
+      <div class="pairs" id="pairs"></div>
+    </div>
+
+    <div class="actions">
+      <span class="sp"></span>
+      <button type="button" class="btn" id="tcancel">Cerrar</button>
+      <button type="submit" class="btn primary">Guardar cambios</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 (function(){
-  const STORE='partidos-v2';
+  const STORE='partidos-v2', TSTORE='partidos-v2-travel';
   const MIN=1440;
   const pad=n=>String(n).padStart(2,'0');
   const key=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
@@ -269,9 +343,12 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
   const fmt=m=>m>=MIN?'24:00':`${pad(Math.floor(m/60))}:${pad(m%60)}`;
   const span=m=>{const s=toMin(m.time);return [s,Math.min(s+m.dur,MIN)]};
   const overlaps=(a,b)=>{const [as,ae]=span(a),[bs,be]=span(b);return as<be&&bs<ae};
+  const byStart=(a,b)=>toMin(a.time)-toMin(b.time);
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
   const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+  const pk=(a,b)=>[norm(a),norm(b)].sort().join('|');
   const ALERT='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2 14.5 13.5h-13Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 6.6v3M8 11.6v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 
   /* ---------- storage ---------- */
@@ -285,25 +362,51 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     return null;
   }
   function save(){try{localStorage.setItem(STORE,JSON.stringify(matches))}catch(e){}}
+  const GSTORE='partidos-v2-geo';
+  function loadCfg(){
+    try{
+      const r=localStorage.getItem(TSTORE);
+      if(r){
+        const c=JSON.parse(r);
+        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{}};
+      }
+    }catch(e){}
+    return null;
+  }
+  function loadGeo(){try{const r=localStorage.getItem(GSTORE);return r?JSON.parse(r):{}}catch(e){return {}}}
+  function saveGeo(){try{localStorage.setItem(GSTORE,JSON.stringify(geo))}catch(e){}}
+  function saveCfg(){try{localStorage.setItem(TSTORE,JSON.stringify(cfg))}catch(e){}}
 
   function seed(){
     const t=new Date(),y=t.getFullYear(),mo=t.getMonth(),dim=new Date(y,mo+1,0).getDate();
     const S=[[5,'11:00',120,'CD Montaña','V','Sub-14','Campo La Cumbre'],
-      [9,'18:00',120,'Real Atlántico','L','Senior',''],
+      [9,'18:00',120,'Real Atlántico','L','Senior','Campo municipal'],
+      [10,'15:30',90,'Peña Norte','V','Sub-14','Estadio Norte'],
+      [10,'17:30',90,'Juventud Este','L','Sub-16','Campo municipal'],
       [12,'10:00',120,'Atlético Norte','L','Sub-12','Campo municipal'],
       [12,'11:30',120,'UD Valle','V','Sub-14','Estadio del Valle'],
-      [16,'17:00',120,'CF Marina','L','Senior',''],
-      [19,'09:30',90,'Escuela Sur','V','Sub-10',''],
-      [19,'10:30',90,'Deportivo Costa','L','Sub-12',''],
-      [19,'16:00',120,'AD Barranco','L','Senior',''],
-      [23,'20:00',120,'Racing Sur','V','Senior',''],
-      [26,'12:00',120,'CD Faro','L','Sub-14',''],
-      [26,'13:30',120,'Unión Playa','V','Sub-16','']];
+      [16,'17:00',120,'CF Marina','L','Senior','Campo municipal'],
+      [19,'09:30',90,'Escuela Sur','V','Sub-10','Campo Escuela Sur'],
+      [19,'10:30',90,'Deportivo Costa','L','Sub-12','Campo municipal'],
+      [19,'16:00',120,'AD Barranco','L','Senior','Campo municipal'],
+      [23,'20:00',120,'Racing Sur','V','Senior','Estadio Racing'],
+      [26,'12:00',120,'CD Faro','L','Sub-14','Campo municipal'],
+      [26,'13:30',120,'Unión Playa','V','Sub-16','Estadio Playa']];
     return S.map(([d,time,dur,rival,side,team,venue])=>({id:uid(),date:key(y,mo,Math.min(d,dim)),time,dur,rival,side,team,venue,coach:COACH[team]||''}));
   }
+  function seedPairs(){
+    const P={};
+    [['Campo municipal','Campo La Cumbre',35],['Campo municipal','Estadio del Valle',25],['Campo municipal','Campo Escuela Sur',40],
+     ['Campo municipal','Estadio Racing',45],['Campo municipal','Estadio Playa',30],['Campo municipal','Estadio Norte',45]]
+      .forEach(([a,b,m])=>{P[pk(a,b)]=m});
+    return P;
+  }
 
-  let matches=load();
-  if(!Array.isArray(matches)){matches=seed();save();}
+  let matches=load(),seeded=false;
+  if(!Array.isArray(matches)){matches=seed();save();seeded=true;}
+  let cfg=loadCfg();
+  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{}};saveCfg();}
+  let geo=loadGeo();
 
   const now=new Date();
   const todayKey=keyOf(now);
@@ -314,17 +417,139 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
   const fmtMonth=new Intl.DateTimeFormat('es-ES',{month:'long'});
   const fromKey=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
 
-  /* ---------- conflicts ---------- */
+  /* ---------- trayectos y conflictos ---------- */
+  function travelInfo(a,b){
+    const va=norm(a.venue),vb=norm(b.venue);
+    if(!va||!vb||va===vb)return {min:0,est:false};
+    const v=cfg.pairs[pk(va,vb)];
+    if(Number.isFinite(v))return {min:v,est:false};
+    return {min:cfg.def,est:true};
+  }
+  // Compara cualquier pareja de partidos del mismo día.
+  // Devuelve null, {kind:'overlap'} o {kind:'travel',gap,need,est,first,second}
+  function evalPair(a,b){
+    if(overlaps(a,b))return {kind:'overlap'};
+    const first=span(a)[0]<=span(b)[0]?a:b, second=first===a?b:a;
+    const gap=span(second)[0]-span(first)[1];
+    const t=travelInfo(first,second);
+    if(t.min>gap)return {kind:'travel',gap,need:t.min,est:t.est,first,second};
+    return null;
+  }
   function conflictMap(){
     const byDay={};matches.forEach(m=>{(byDay[m.date]=byDay[m.date]||[]).push(m)});
     const map=new Map();
-    const add=(a,b)=>{if(!map.has(a.id))map.set(a.id,[]);map.get(a.id).push(b)};
+    const add=(m,o,r,isFirst)=>{if(!map.has(m.id))map.set(m.id,[]);map.get(m.id).push(Object.assign({o,isFirst},r))};
     Object.values(byDay).forEach(l=>{
       for(let i=0;i<l.length;i++)for(let j=i+1;j<l.length;j++){
-        if(overlaps(l[i],l[j])){add(l[i],l[j]);add(l[j],l[i]);}
+        const r=evalPair(l[i],l[j]);
+        if(r){add(l[i],l[j],r,r.first===l[i]);add(l[j],l[i],r,r.first===l[j]);}
       }
     });
     return map;
+  }
+  function status(m,cm){
+    const e=cm.get(m.id)||[];
+    if(e.some(x=>x.kind==='overlap'))return 'bad';
+    return e.length?'warn':'ok';
+  }
+  function crossText(m,cm){
+    const e=cm.get(m.id);if(!e||!e.length)return '';
+    const ov=e.filter(x=>x.kind==='overlap');
+    if(ov.length){
+      const same=ov.some(x=>m.coach&&x.o.coach===m.coach);
+      return 'Se cruza con '+ov[0].o.rival+(ov.length>1?` y ${ov.length-1} más`:'')+(same?' (mismo entrenador)':'');
+    }
+    const t=e[0],late=t.need-t.gap;
+    return t.isFirst?`Llegaría ${late} min tarde a ${t.o.rival}`:`Llegaría ${late} min tarde (viene de ${t.o.rival})`;
+  }
+  function venueList(){
+    const seen=new Map();
+    matches.forEach(m=>{const n=norm(m.venue);if(n&&!seen.has(n))seen.set(n,String(m.venue).trim())});
+    return [...seen.values()].sort((a,b)=>a.localeCompare(b,'es'));
+  }
+
+  /* ---------- cálculo de trayectos (OpenStreetMap: Nominatim + OSRM) ---------- */
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function fetchJSON(url,ms){
+    const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms||12000);
+    return fetch(url,{signal:ac.signal}).then(r=>{if(!r.ok)throw new Error('http '+r.status);return r.json()}).finally(()=>clearTimeout(t));
+  }
+  function parseCoords(s){
+    const m=String(s).trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)$/);
+    if(!m)return null;
+    const lat=+m[1],lon=+m[2];
+    if(Math.abs(lat)>90||Math.abs(lon)>180)return null;
+    return {lat,lon,name:`${lat}, ${lon}`};
+  }
+  let geoChain=Promise.resolve(),lastGeo=0;
+  function geocode(place){
+    const c=parseCoords(place);if(c)return Promise.resolve(c);
+    const area=cfg.area.trim();
+    const q=place.trim()+(area&&!norm(place).includes(norm(area))?', '+area:'');
+    const ck=norm(q);
+    if(geo[ck])return Promise.resolve(geo[ck]);
+    const run=async()=>{
+      if(geo[ck])return geo[ck];
+      const wait=1100-(Date.now()-lastGeo);if(wait>0)await sleep(wait);
+      lastGeo=Date.now();
+      const res=await fetchJSON('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=es&q='+encodeURIComponent(q));
+      if(!res||!res.length)throw new Error('nofound:'+place);
+      const g={lat:+res[0].lat,lon:+res[0].lon,name:res[0].display_name||q};
+      geo[ck]=g;saveGeo();return g;
+    };
+    const p=geoChain.then(run);geoChain=p.catch(()=>{});return p;
+  }
+  async function routeBetween(pa,pb){
+    const A=await geocode(pa),B=await geocode(pb);
+    const j=await fetchJSON(`https://router.project-osrm.org/route/v1/driving/${A.lon},${A.lat};${B.lon},${B.lat}?overview=false`);
+    if(!j||!j.routes||!j.routes.length)throw new Error('noroute');
+    return {secs:j.routes[0].duration,meters:j.routes[0].distance,A,B};
+  }
+  function errText(e){
+    const m=String(e&&e.message||'');
+    if(m.startsWith('nofound:'))return `No encuentro «${m.slice(8)}». Escribe la dirección completa, añade el pueblo o pega unas coordenadas (por ejemplo 41.6,2.5).`;
+    if(m==='noroute')return 'No hay ruta por carretera entre esos dos lugares.';
+    return 'No se pudo calcular el trayecto (sin conexión o servicio no disponible). Puedes escribir los minutos a mano en «Trayectos».';
+  }
+  const pending=new Map(),failedKeys=new Set();
+  function ensurePair(va,vb){
+    if(!norm(va)||!norm(vb)||norm(va)===norm(vb))return Promise.resolve(0);
+    const k=pk(va,vb);
+    if(Number.isFinite(cfg.pairs[k]))return Promise.resolve(cfg.pairs[k]);
+    if(pending.has(k))return pending.get(k);
+    const p=routeBetween(va,vb).then(r=>{
+      const mins=Math.ceil(r.secs/60)+cfg.buffer;
+      cfg.pairs[k]=mins;cfg.src[k]='auto';saveCfg();failedKeys.delete(k);return mins;
+    }).catch(e=>{failedKeys.add(k);throw e;}).finally(()=>pending.delete(k));
+    pending.set(k,p);return p;
+  }
+  const netmsg=document.getElementById('netmsg');let netTimer=null;
+  function say(text,kind,ms){
+    clearTimeout(netTimer);
+    if(!text){netmsg.hidden=true;return;}
+    netmsg.hidden=false;netmsg.className='netmsg '+(kind||'');netmsg.textContent=text;
+    if(ms)netTimer=setTimeout(()=>{netmsg.hidden=true},ms);
+  }
+  // Calcula los trayectos que faltan entre los lugares de los partidos de un día.
+  async function ensureDay(dateKey){
+    const list=matches.filter(m=>m.date===dateKey);
+    const todo=[];
+    for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+      const a=norm(list[i].venue),b=norm(list[j].venue);
+      if(!a||!b||a===b)continue;
+      const k=pk(a,b);
+      if(Number.isFinite(cfg.pairs[k])||failedKeys.has(k)||todo.some(x=>x.k===k))continue;
+      todo.push({k,va:list[i].venue,vb:list[j].venue});
+    }
+    if(!todo.length)return;
+    say('Calculando trayectos…','');
+    let done=0;const fails=[];
+    for(const t of todo){
+      try{await ensurePair(t.va,t.vb);done++;render();}
+      catch(e){fails.push(errText(e));}
+    }
+    if(fails.length)say(fails[0],'bad');
+    else say(`${done} ${done===1?'trayecto calculado':'trayectos calculados'} por ruta en coche.`,'ok',5000);
   }
 
   /* ---------- header / stats ---------- */
@@ -335,29 +560,27 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     const prefix=`${view.y}-${pad(view.m+1)}-`;
     const mm=matches.filter(m=>m.date.startsWith(prefix));
     const loc=mm.filter(m=>m.side==='L').length, vis=mm.length-loc;
-    const bad=mm.filter(m=>cm.has(m.id)).length;
+    const bad=mm.filter(m=>status(m,cm)==='bad').length;
+    const warn=mm.filter(m=>status(m,cm)==='warn').length;
     document.getElementById('stats').innerHTML=
       `<div class="stat"><b>${mm.length}</b><span>partidos en el mes</span></div>`+
       `<div class="stat"><b>${loc}</b><span>locales</span></div>`+
       `<div class="stat"><b>${vis}</b><span>visitantes</span></div>`+
-      `<div class="stat ${bad?'warn':''}"><b>${bad}</b><span>${bad===1?'partido superpuesto':'partidos superpuestos'}</span></div>`;
+      `<div class="stat ${bad?'warn':''}"><b>${bad}</b><span>${bad===1?'partido superpuesto':'partidos superpuestos'}</span></div>`+
+      `<div class="stat ${warn?'travel':''}"><b>${warn}</b><span>${warn===1?'partido sin tiempo de trayecto':'partidos sin tiempo de trayecto'}</span></div>`;
   }
 
   /* ---------- month grid ---------- */
-  function crossText(m,cm){
-    const o=cm.get(m.id);if(!o||!o.length)return '';
-    const same=o.some(x=>m.coach&&x.coach===m.coach);
-    return 'Se cruza con '+o[0].rival+(o.length>1?` y ${o.length-1} más`:'')+(same?' (mismo entrenador)':'');
-  }
   function chipHTML(m,cm){
-    const cross=crossText(m,cm);
-    const bad=cm.has(m.id);
+    const st=status(m,cm);
     const local=m.side==='L';
-    const label=`${local?'Local':'Visitante'} ${m.time} ${m.rival}${m.coach?', entrenador '+m.coach:''}${cross?'. '+cross:''}`;
-    return `<button type="button" class="chip ${bad?'bad':'ok'} ${local?'local':'away'}" data-edit="${m.id}" title="${esc(label)}" aria-label="${esc(label)}">`+
+    const cross=crossText(m,cm);
+    const label=`${local?'Local':'Visitante'} ${m.time} ${m.rival}${m.venue?', en '+m.venue:''}${m.coach?', entrenador '+m.coach:''}${cross?'. '+cross:''}`;
+    return `<button type="button" class="chip ${st} ${local?'local':'away'}" data-edit="${m.id}" title="${esc(label)}" aria-label="${esc(label)}">`+
       `<span class="tag">${local?'L':'V'}</span><span class="ct"><span class="l1"><span class="t">${m.time}</span><span class="rv">${esc(m.rival)}</span></span>`+
+      (m.venue?`<span class="vn">${esc(m.venue)}</span>`:'')+
       (m.coach?`<span class="co">Entr. ${esc(m.coach)}</span>`:'')+
-      (cross?`<span class="cx">${esc(cross)}</span>`:'')+`</span>${bad?ALERT:''}</button>`;
+      (cross?`<span class="cx">${esc(cross)}</span>`:'')+`</span>${st!=='ok'?ALERT:''}</button>`;
   }
 
   function renderGrid(cm){
@@ -369,14 +592,18 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     for(let i=0;i<42;i++){
       const dt=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
       const k=keyOf(dt);
-      const list=(byDay[k]||[]).slice().sort((a,b)=>toMin(a.time)-toMin(b.time));
-      const nBad=list.filter(m=>cm.has(m.id)).length;
+      const list=(byDay[k]||[]).slice().sort(byStart);
+      const nBad=list.filter(m=>status(m,cm)==='bad').length;
+      const nWarn=list.filter(m=>status(m,cm)==='warn').length;
       const other=dt.getMonth()!==view.m;
-      const cls=['cell',other?'other':'',k===todayKey?'today':'',k===selected?'sel':'',nBad?'has-bad':''].join(' ');
+      const cls=['cell',other?'other':'',k===todayKey?'today':'',k===selected?'sel':'',nBad?'has-bad':(nWarn?'has-warn':'')].join(' ');
       const shown=list.slice(0,3), rest=list.length-shown.length;
-      html+=`<div class="${cls}" role="gridcell" tabindex="0" data-day="${k}" aria-label="${esc(cap(fmtDay.format(dt)))}, ${list.length} partidos${nBad?', '+nBad+' superpuestos':''}">`+
-        `<div class="ctop"><span class="dn">${dt.getDate()}</span>`+
-        (nBad?`<span class="cbadge" title="${nBad} partidos se superponen">${ALERT}${nBad}</span>`:'')+`</div>`+
+      const probs=[nBad?`${nBad} superpuestos`:'',nWarn?`${nWarn} sin tiempo de trayecto`:''].filter(Boolean).join(', ');
+      html+=`<div class="${cls}" role="gridcell" tabindex="0" data-day="${k}" aria-label="${esc(cap(fmtDay.format(dt)))}, ${list.length} partidos${probs?', '+probs:''}">`+
+        `<div class="ctop"><span class="dn">${dt.getDate()}</span><span class="badges">`+
+        (nBad?`<span class="cbadge" title="${nBad} partidos se superponen">${ALERT}${nBad}</span>`:'')+
+        (nWarn?`<span class="cbadge warn" title="${nWarn} partidos sin tiempo para el trayecto">${ALERT}${nWarn}</span>`:'')+
+        `</span></div>`+
         `<div class="chips">${shown.map(m=>chipHTML(m,cm)).join('')}${rest>0?`<span class="more">+${rest} más</span>`:''}</div></div>`;
     }
     document.getElementById('grid').innerHTML=html;
@@ -405,9 +632,21 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     return res;
   }
 
+  function okTravelLines(list){
+    const g=list.slice().sort(byStart),out=[];
+    for(let i=0;i<g.length-1;i++){
+      const a=g[i],b=g[i+1];
+      if(overlaps(a,b))continue;
+      const t=travelInfo(a,b);if(t.min<=0)continue;
+      const gap=span(b)[0]-span(a)[1];
+      if(gap>=t.min)out.push(`${esc(a.rival)} (${esc(a.venue)}) a ${esc(b.rival)} (${esc(b.venue)}): trayecto ${t.min} min${t.est?' (estimado)':''}, hay ${gap} min.`);
+    }
+    return out;
+  }
+
   function renderDay(cm){
     const dt=fromKey(selected);
-    const list=matches.filter(m=>m.date===selected).sort((a,b)=>toMin(a.time)-toMin(b.time));
+    const list=matches.filter(m=>m.date===selected).sort(byStart);
     const nL=list.filter(m=>m.side==='L').length,nV=list.length-nL;
     const sub=list.length?`${list.length} ${list.length===1?'partido':'partidos'}: ${nL} ${nL===1?'local':'locales'}, ${nV} ${nV===1?'visitante':'visitantes'}`:'Sin partidos programados';
     let html=`<div class="dhead"><div><h2 class="dtitle">${esc(cap(fmtDay.format(dt)))}</h2><p class="dsub">${sub}</p></div>`+
@@ -418,15 +657,28 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
       document.getElementById('day').innerHTML=html;return;
     }
 
-    // conflict pairs
-    const pairs=[];
-    for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++)if(overlaps(list[i],list[j]))pairs.push([list[i],list[j]]);
-    if(pairs.length){
+    const ovPairs=[],trPairs=[];
+    for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+      const r=evalPair(list[i],list[j]);if(!r)continue;
+      if(r.kind==='overlap')ovPairs.push([list[i],list[j]]);else trPairs.push(r);
+    }
+    if(ovPairs.length){
       const d=m=>{const [s,e]=span(m);return `${esc(m.rival)} (${fmt(s)}–${fmt(e)})`};
-      html+=`<div class="alert"><b>${ALERT}${pairs.length===1?'Hay 1 superposición':`Hay ${pairs.length} superposiciones`}</b><ul>`+
-        pairs.map(([a,b])=>`<li>${d(a)} y ${d(b)}${a.coach&&a.coach===b.coach?' — mismo entrenador ('+esc(a.coach)+')':''}</li>`).join('')+`</ul></div>`;
-    }else if(list.length>1){
-      html+=`<div class="okmsg">Los ${list.length} partidos de este día no se superponen.</div>`;
+      html+=`<div class="alert"><b>${ALERT}${ovPairs.length===1?'Hay 1 superposición':`Hay ${ovPairs.length} superposiciones`}</b><ul>`+
+        ovPairs.map(([a,b])=>`<li>${d(a)} y ${d(b)}${a.coach&&a.coach===b.coach?' — mismo entrenador ('+esc(a.coach)+')':''}</li>`).join('')+`</ul></div>`;
+    }
+    if(trPairs.length){
+      html+=`<div class="alert warn"><b>${ALERT}${trPairs.length===1?'1 trayecto sin tiempo suficiente':`${trPairs.length} trayectos sin tiempo suficiente`}</b><ul>`+
+        trPairs.map(r=>{
+          const f=r.first,s=r.second,fe=span(f)[1],ss=span(s)[0];
+          return `<li>${f.coach?esc(f.coach)+': ':''}${esc(f.rival)} (${esc(f.venue||'sin lugar')}, termina ${fmt(fe)}) a ${esc(s.rival)} (${esc(s.venue||'sin lugar')}, empieza ${fmt(ss)}): trayecto ${r.need} min${r.est?' (estimado)':''}, hay ${r.gap} min. Faltan ${r.need-r.gap} min.</li>`;
+        }).join('')+`</ul></div>`;
+    }
+    const okT=okTravelLines(list);
+    if(!ovPairs.length&&!trPairs.length&&list.length>1){
+      html+=`<div class="okmsg">Sin superposiciones ni problemas de trayecto.${okT.length?`<ul>${okT.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div>`;
+    }else if(okT.length){
+      html+=`<div class="okmsg"><b>Trayectos con margen suficiente</b><ul>${okT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
     }
 
     const HOUR=64,PX=HOUR/60;
@@ -436,14 +688,15 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     let lines='';
     for(let h=lo;h<=hi;h++)lines+=`<div class="hl" style="top:${(h-lo)*HOUR}px"><span>${pad(h%24)}:00</span></div>`;
     const evs=list.map(m=>{
-      const [s,e]=span(m);const L=lay.get(m.id);const bad=cm.has(m.id);const local=m.side==='L';
-      const top=(s-lo*60)*PX,h=Math.max((e-s)*PX,64);
-      const meta=[m.team,m.venue].filter(Boolean).join(' · ');
-      return `<button type="button" class="ev ${bad?'bad':'ok'} ${local?'local':'away'}" data-edit="${m.id}" `+
+      const [s,e]=span(m);const L=lay.get(m.id);const st=status(m,cm);const local=m.side==='L';
+      const top=(s-lo*60)*PX,h=Math.max((e-s)*PX,78);
+      const meta=[m.team,m.venue&&('Lugar: '+m.venue)].filter(Boolean).join(' · ');
+      return `<button type="button" class="ev ${st} ${local?'local':'away'}" data-edit="${m.id}" `+
         `style="top:${top}px;height:${h-2}px;left:calc(${L.col}*100%/${L.cols});width:calc(100%/${L.cols} - 4px)" `+
-        `aria-label="${esc((local?'Local':'Visitante')+' '+fmt(s)+' a '+fmt(e)+' '+m.rival+(bad?', se superpone':''))}">`+
-        `<span class="l1"><span class="tag">${local?'L':'V'}</span><span class="tm">${fmt(s)}–${fmt(e)}</span>${bad?ALERT:''}</span>`+
-        `<span class="rv">${esc(m.rival)}</span>${m.coach?`<span class="mt">Entrenador: ${esc(m.coach)}</span>`:''}${meta?`<span class="mt">${esc(meta)}</span>`:''}</button>`;
+        `aria-label="${esc((local?'Local':'Visitante')+' '+fmt(s)+' a '+fmt(e)+' '+m.rival+(st==='bad'?', se superpone':st==='warn'?', no da tiempo al trayecto':''))}">`+
+        `<span class="l1"><span class="tag">${local?'L':'V'}</span><span class="tm">${fmt(s)}–${fmt(e)}</span>${st!=='ok'?ALERT:''}</span>`+
+        `<span class="rv">${esc(m.rival)}</span>`+
+        `${m.coach?`<span class="mt">Entrenador: ${esc(m.coach)}</span>`:''}${meta?`<span class="mt">${esc(meta)}</span>`:''}</button>`;
     }).join('');
     html+=`<div class="tl" style="height:${(hi-lo)*HOUR}px">${lines}<div class="evs">${evs}</div></div>`;
     document.getElementById('day').innerHTML=html;
@@ -459,32 +712,51 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     const d=new Date(view.y,view.m+delta,1);view={y:d.getFullYear(),m:d.getMonth()};
     const t=new Date();
     selected=(view.y===t.getFullYear()&&view.m===t.getMonth())?todayKey:key(view.y,view.m,1);
-    render();
+    render();ensureDay(selected);
   }
   document.getElementById('prev').onclick=()=>goMonth(-1);
   document.getElementById('next').onclick=()=>goMonth(1);
   document.getElementById('today').onclick=()=>{const t=new Date();view={y:t.getFullYear(),m:t.getMonth()};selected=todayKey;render();};
 
-  /* ---------- dialog ---------- */
+  /* ---------- diálogo de partido ---------- */
   const dlg=document.getElementById('dlg'),f=document.getElementById('f'),fmsg=document.getElementById('fmsg'),delBtn=document.getElementById('del');
   let editing=null,armed=false;
 
   function candidate(){
-    return {id:editing?editing.id:'__new',date:f.date.value,time:f.time.value,dur:Number(f.dur.value),coach:f.coach.value.trim()};
+    return {id:editing?editing.id:'__new',date:f.date.value,time:f.time.value,dur:Number(f.dur.value),
+      coach:f.coach.value.trim(),venue:f.venue.value.trim(),rival:f.rival.value.trim()||'este partido'};
   }
   function checkForm(){
     const c=candidate();
-    if(!c.date||!c.time){fmsg.className='fmsg';fmsg.textContent='Elige fecha y hora para comprobar si se superpone con otro partido.';return;}
-    const hits=matches.filter(m=>m.id!==c.id&&m.date===c.date&&overlaps(c,m));
-    if(hits.length){
-      fmsg.className='fmsg bad';
-      fmsg.textContent='Se superpone con: '+hits.map(m=>{const [s,e]=span(m);return `${m.rival} (${fmt(s)}–${fmt(e)})`}).join(', ')+'.'+(c.coach&&hits.some(m=>m.coach===c.coach)?' '+c.coach+' tendría dos partidos a la vez.':'');
-    }else{
-      fmsg.className='fmsg';
-      fmsg.textContent='Sin conflicto: no coincide con otros partidos ese día.';
+    if(!c.date||!c.time){fmsg.className='fmsg';fmsg.textContent='Elige fecha y hora para comprobar superposiciones y trayectos.';return;}
+    const ov=[],tr=[];
+    matches.filter(m=>m.id!==c.id&&m.date===c.date).forEach(m=>{
+      const r=evalPair(c,m);if(!r)return;
+      if(r.kind==='overlap')ov.push(m);else tr.push(r);
+    });
+    const parts=[];
+    if(ov.length){
+      parts.push('Se superpone con: '+ov.map(m=>{const [s,e]=span(m);return `${m.rival} (${fmt(s)}–${fmt(e)})`}).join(', ')+'.'+
+        (c.coach&&ov.some(m=>m.coach===c.coach)?' '+c.coach+' tendría dos partidos a la vez.':''));
     }
+    tr.forEach(r=>parts.push(`Trayecto insuficiente entre ${r.first.rival} y ${r.second.rival}: hacen falta ${r.need} min${r.est?' (estimado)':''} y hay ${r.gap}.`));
+    if(parts.length){fmsg.className='fmsg '+(ov.length?'bad':'warn');fmsg.textContent=parts.join(' ');}
+    else{fmsg.className='fmsg';fmsg.textContent='Sin conflicto: no se superpone ni hay problemas de trayecto.';}
   }
-  ['date','time','dur','coach'].forEach(n=>{f[n].addEventListener('input',checkForm);f[n].addEventListener('change',checkForm)});
+  ['date','time','dur','coach','venue','rival'].forEach(n=>{f[n].addEventListener('input',checkForm);f[n].addEventListener('change',checkForm)});
+  async function autoRoutes(){
+    const c=candidate();if(!c.venue||!c.date)return;
+    const others=matches.filter(m=>m.id!==c.id&&m.date===c.date&&norm(m.venue)&&norm(m.venue)!==norm(c.venue)&&!Number.isFinite(cfg.pairs[pk(m.venue,c.venue)]));
+    if(!others.length)return;
+    fmsg.className='fmsg';fmsg.textContent='Calculando trayecto…';
+    let err=null;
+    for(const m of others){try{await ensurePair(c.venue,m.venue);}catch(e){err=e;}}
+    checkForm();
+    if(err)fmsg.textContent+=' '+errText(err);
+    render();
+  }
+  f.venue.addEventListener('change',autoRoutes);
+  f.date.addEventListener('change',autoRoutes);
 
   function openDialog(m,dateKey){
     editing=m||null;armed=false;
@@ -496,9 +768,10 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     f.date.value=m?m.date:(dateKey||selected);
     f.time.value=m?m.time:'18:00';
     f.dur.value=m?String(m.dur):'120';
+    f.venue.value=m?(m.venue||''):'';
     f.coach.value=m?(m.coach||''):'';
     f.team.value=m?(m.team||''):'';
-    f.venue.value=m?(m.venue||''):'';
+    document.getElementById('venues').innerHTML=venueList().map(v=>`<option value="${esc(v)}"></option>`).join('');
     checkForm();
     if(typeof dlg.showModal==='function')dlg.showModal();else dlg.setAttribute('open','');
     setTimeout(()=>f.rival.focus(),30);
@@ -522,7 +795,7 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     else matches.push(Object.assign({id:uid()},data));
     save();
     const d=fromKey(data.date);view={y:d.getFullYear(),m:d.getMonth()};selected=data.date;
-    closeDialog();render();
+    closeDialog();render();ensureDay(data.date);
   });
 
   delBtn.onclick=()=>{
@@ -530,7 +803,94 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     matches=matches.filter(m=>m.id!==editing.id);save();closeDialog();render();
   };
 
-  /* ---------- events ---------- */
+  /* ---------- diálogo de trayectos ---------- */
+  const tdlg=document.getElementById('tdlg'),tf=document.getElementById('tf'),tres=document.getElementById('tres');
+  const gmaps=(a,b)=>'https://www.google.com/maps/dir/?api=1&travelmode=driving&origin='+encodeURIComponent(a)+'&destination='+encodeURIComponent(b);
+  const shortName=n=>String(n||'').split(',').slice(0,3).join(',');
+  function applySettings(){
+    const d=Number(tf.def.value),b=Number(tf.buffer.value);
+    cfg.def=Number.isFinite(d)&&d>=0?Math.min(d,300):30;
+    cfg.buffer=Number.isFinite(b)&&b>=0?Math.min(b,120):10;
+    cfg.area=tf.area.value.trim();
+    saveCfg();
+  }
+  function renderPairs(){
+    const vs=venueList();
+    document.getElementById('tvenues').innerHTML=vs.map(v=>`<option value="${esc(v)}"></option>`).join('');
+    let html='';
+    if(vs.length<2){
+      html='<p class="hint">Añade el lugar a tus partidos (al menos dos lugares distintos) para ver aquí los trayectos entre ellos.</p>';
+    }else{
+      for(let i=0;i<vs.length;i++)for(let j=i+1;j<vs.length;j++){
+        const k=pk(vs[i],vs[j]);const v=cfg.pairs[k];
+        const tag=Number.isFinite(v)?(cfg.src[k]==='auto'?'calculado por ruta':'indicado a mano'):'sin calcular';
+        html+=`<label class="pair"><span>${esc(vs[i])} ↔ ${esc(vs[j])}<small>${tag}</small></span>`+
+          `<input type="number" min="0" max="300" step="5" inputmode="numeric" data-k="${esc(k)}" data-prev="${Number.isFinite(v)?v:''}" value="${Number.isFinite(v)?v:''}" placeholder="${cfg.def} min" aria-label="Minutos entre ${esc(vs[i])} y ${esc(vs[j])}"></label>`;
+      }
+    }
+    document.getElementById('pairs').innerHTML=html;
+  }
+  function openTravel(){
+    tf.def.value=cfg.def;tf.buffer.value=cfg.buffer;tf.area.value=cfg.area;
+    tf.torig.value='';tf.tdest.value='';tres.hidden=true;
+    renderPairs();
+    if(typeof tdlg.showModal==='function')tdlg.showModal();else tdlg.setAttribute('open','');
+  }
+  document.getElementById('travelBtn').onclick=openTravel;
+  document.getElementById('tcancel').onclick=()=>{if(tdlg.open)tdlg.close();};
+  tdlg.addEventListener('click',e=>{if(e.target===tdlg)tdlg.close();});
+
+  document.getElementById('tcalc').onclick=async()=>{
+    const a=tf.torig.value.trim(),b=tf.tdest.value.trim();
+    tres.hidden=false;
+    if(!a||!b){tres.className='fmsg err';tres.textContent='Escribe el lugar de origen y el de destino.';return;}
+    if(norm(a)===norm(b)){tres.className='fmsg';tres.textContent='Origen y destino son el mismo lugar: 0 min.';return;}
+    applySettings();
+    tres.className='fmsg';tres.textContent='Calculando…';
+    try{
+      const r=await routeBetween(a,b);
+      const mins=Math.ceil(r.secs/60),total=mins+cfg.buffer,km=(r.meters/1000).toFixed(1).replace('.',',');
+      tres.className='fmsg';
+      tres.innerHTML=`<b>${esc(a)} → ${esc(b)}</b><br>Ruta en coche: ${mins} min (${km} km) + ${cfg.buffer} min de margen = <b>${total} min</b>.`+
+        `<br><small>Origen encontrado: ${esc(shortName(r.A.name))}<br>Destino encontrado: ${esc(shortName(r.B.name))}</small>`+
+        `<div class="actions" style="margin-top:8px"><button type="button" class="btn" id="tsave">Guardar este trayecto</button>`+
+        `<a class="btn" href="${esc(gmaps(a,b))}" target="_blank" rel="noopener">Ver en Google Maps</a></div>`;
+      document.getElementById('tsave').onclick=()=>{
+        const k=pk(a,b);cfg.pairs[k]=total;cfg.src[k]='auto';saveCfg();renderPairs();render();
+        tres.className='fmsg';tres.textContent=`Guardado: ${total} min entre ${a} y ${b}.`;
+      };
+    }catch(e){tres.className='fmsg err';tres.textContent=errText(e);}
+  };
+
+  document.getElementById('tall').onclick=async()=>{
+    applySettings();
+    const vs=venueList(),todo=[];
+    for(let i=0;i<vs.length;i++)for(let j=i+1;j<vs.length;j++)if(!Number.isFinite(cfg.pairs[pk(vs[i],vs[j])]))todo.push([vs[i],vs[j]]);
+    tres.hidden=false;
+    if(!todo.length){tres.className='fmsg';tres.textContent='Todos los trayectos entre tus lugares ya están calculados o indicados.';return;}
+    let done=0,fails=0,last='';
+    for(const [a,b] of todo){
+      tres.className='fmsg';tres.textContent=`Calculando ${done+fails+1} de ${todo.length}…`;
+      try{await ensurePair(a,b);done++;}catch(e){fails++;last=errText(e);}
+    }
+    renderPairs();render();
+    tres.className='fmsg '+(fails?'warn':'');
+    tres.textContent=`${done} ${done===1?'calculado':'calculados'}${fails?`, ${fails} sin resultado. ${last}`:'.'}`;
+  };
+
+  tf.addEventListener('submit',e=>{
+    e.preventDefault();
+    applySettings();
+    tf.querySelectorAll('input[data-k]').forEach(inp=>{
+      const k=inp.dataset.k;
+      if(inp.value===''){delete cfg.pairs[k];delete cfg.src[k];return;}
+      const n=Number(inp.value);
+      if(Number.isFinite(n)&&n>=0&&String(n)!==inp.dataset.prev){cfg.pairs[k]=Math.min(n,300);cfg.src[k]='manual';}
+    });
+    saveCfg();tdlg.close();render();
+  });
+
+  /* ---------- eventos ---------- */
   document.addEventListener('click',e=>{
     const ed=e.target.closest('[data-edit]');
     if(ed){e.stopPropagation();const m=matches.find(x=>x.id===ed.dataset.edit);if(m){selected=m.date;openDialog(m);}return;}
@@ -541,7 +901,7 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
       selected=cell.dataset.day;
       const d=fromKey(selected);
       if(d.getMonth()!==view.m||d.getFullYear()!==view.y)view={y:d.getFullYear(),m:d.getMonth()};
-      render();
+      render();ensureDay(selected);
       const again=document.querySelector(`[data-day="${selected}"]`);if(again)again.focus({preventScroll:true});
     }
   });
@@ -554,7 +914,7 @@ input:focus-visible + .segopt{outline:3px solid var(--focus);outline-offset:2px}
     matches=[];save();this.dataset.armed='';this.textContent='Borrar todos los partidos';render();
   };
 
-  render();
+  render();ensureDay(selected);
 })();
 </script>
 <script>

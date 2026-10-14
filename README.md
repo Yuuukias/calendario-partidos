@@ -19,9 +19,24 @@ Funciona sin conexión y guarda los datos en el propio móvil.
 ## Actualizar la app
 
 Cuando cambies `index.html`, sube también `sw.js` con el número de versión subido
-(`partidos-v1` > `partidos-v2`) para que los móviles recojan la actualización.
+(`partidos-v3` > `partidos-v4`) para que los móviles recojan la actualización.
 
 ## Importante
 
 Los partidos se guardan en el navegador de cada dispositivo (no se comparten entre móviles).
 Si borras los datos del navegador, se pierden.
+
+## Trayectos entre lugares (cálculo automático)
+
+- En cada partido escribe el **Lugar** (nombre o dirección, mejor con el pueblo) y el **Entrenador**.
+- La app calcula sola el tiempo en coche entre los lugares de los partidos de un mismo día,
+  con datos de OpenStreetMap (buscador Nominatim y rutas OSRM). No usa Google Maps ni Waze porque
+  necesitan clave de pago; en el botón "Ver en Google Maps" puedes comprobar la ruta.
+- En el botón **Trayectos** puedes poner un **origen y un destino** y calcular el tiempo,
+  guardar el resultado, calcular todos los que faltan o escribir los minutos a mano.
+- Se suma un **margen extra** (10 min por defecto) al tiempo de la ruta. Se puede cambiar.
+- Si no encuentra un lugar, escribe la dirección completa, añade el pueblo o pega unas
+  coordenadas (por ejemplo `41.6,2.5`).
+- Hace falta conexión para calcular. Los trayectos ya calculados se guardan en el móvil.
+- Un partido sale en **rojo** si se superpone con cualquier otro del día y en **ámbar** si no
+  da tiempo a llegar de un campo al otro. Se comprueba entre todos los partidos, sea cual sea el entrenador.
