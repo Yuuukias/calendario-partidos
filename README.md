@@ -19,7 +19,7 @@ Funciona sin conexión y guarda los datos en el propio móvil.
 ## Actualizar la app
 
 Cuando cambies `index.html`, sube también `sw.js` con el número de versión subido
-(`partidos-v7` > `partidos-v8`) para que los móviles recojan la actualización.
+(`partidos-v8` > `partidos-v9`) para que los móviles recojan la actualización.
 
 ## Importante
 
@@ -67,3 +67,17 @@ Si borras los datos del navegador, se pierden.
 - **Móvil y tableta:** el calendario ocupa toda la pantalla y, al tocar un día, el detalle sube como una hoja
   desde abajo (con la lista de partidos y las horas). Se cierra con la ✕, tocando fuera o con Esc.
 - En el móvil los botones principales (Importar, Trayectos, Nuevo partido) están en una barra fija abajo.
+
+## Partidos del Club Vòlei Sant Celoni (iSquad)
+
+- El botón **iSquad** añade al calendario los partidos de las 10 categorías del club, con la categoría, el entrenador
+  (cuando figura en iSquad), el lugar con sus coordenadas, y si es local o visitante.
+- Los datos van **dentro de la página** (bloque `isq-data` al final de `index.html`), leídos de iSquad el 15/10/2026.
+  La web de iSquad no permite que otra página lea sus datos desde el navegador, por eso la app no se actualiza sola:
+  para refrescar, se vuelve a generar el bloque `isq-data` y se sube una versión nueva.
+- Al importar, cada partido entra como **horario sin confirmar** (borde discontinuo y «?»). En el detalle del día
+  hay «Confirmar horario» (uno a uno) y «Confirmar los horarios del día».
+- Los partidos que iSquad todavía no tiene con hora salen como **«Hora por confirmar»**: no cuentan para superposiciones
+  ni trayectos hasta que les pongas hora («Poner hora»).
+- Si se vuelve a importar y iSquad cambia una fecha u hora, el partido vuelve a «sin confirmar» y muestra el horario anterior.
+- En «Trayectos > Ajustes» hay una opción para avisar de superposiciones solo cuando coincide el entrenador.

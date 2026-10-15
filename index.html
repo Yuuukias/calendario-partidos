@@ -304,6 +304,34 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   .legend .grp{gap:8px}
   .sw{width:13px;height:13px}
 }
+/* ---------- iSquad y horarios por confirmar ---------- */
+.sw.uncsw{background:var(--surface);border:2px dashed var(--muted)}
+.chip.unc,.ev.unc,.dcard.unc{border-style:dashed}
+.chip.unc::after,.ev.unc::after{content:"?";position:absolute;top:-6px;right:-4px;width:15px;height:15px;border-radius:50%;background:#6D3FC9;color:#fff;font-size:11px;font-weight:800;line-height:15px;text-align:center;box-shadow:0 0 0 2px var(--surface)}
+.chip,.ev{position:relative}
+.chip.done,.ev.done,.dcard.done{opacity:.62}
+.stat.unc b{color:#6D3FC9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stat.unc b{color:#B79CFF}}
+:root[data-theme="dark"] .stat.unc b{color:#B79CFF}
+.chk{display:flex;gap:10px;align-items:center;font-size:14px;margin:6px 0}
+.chk input{width:20px;height:20px;flex:none}
+.dcard{cursor:pointer}
+.dcard:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.dcard .dn2{font-size:12.5px}
+.dcard .dact{margin-top:6px}
+.btn.mini{padding:8px 12px;font-size:13px;border-radius:8px}
+.dcard .dact .btn{color:var(--ink)}
+.confall{margin:12px 0 0}
+.qrow{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.qrow:first-child{border-top:0}
+.qrow input{width:20px;height:20px;flex:none;margin-top:2px}
+.qrow b{display:block;font-size:14.5px}
+.qrow small{display:block;color:var(--muted);font-size:12.5px;line-height:1.35}
+.qrow a{font-size:12.5px}
+@media (max-width:720px){
+  .actionbar{grid-template-columns:1fr 1fr 1.1fr 1.3fr!important}
+  .actionbar .btn{font-size:13px;padding:0 3px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -320,6 +348,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       </div>
       <div class="actionbar">
         <button class="btn" id="importBtn">Importar</button>
+        <button class="btn" id="isqBtn">iSquad</button>
         <button class="btn" id="travelBtn">Trayectos</button>
         <button class="btn primary" id="add">Nuevo partido</button>
       </div>
@@ -336,7 +365,8 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     <div class="grp" id="legNoClub" hidden><span class="it"><span class="sw grd"></span>Sin club asignado</span></div>
     <div class="grp"><span class="gt">Avisos</span>
       <span class="it"><span class="sw ringov"></span>Se superpone</span>
-      <span class="it"><span class="sw ringtr"></span>No da tiempo al trayecto</span></div>
+      <span class="it"><span class="sw ringtr"></span>No da tiempo al trayecto</span>
+      <span class="it"><span class="sw uncsw"></span>Horario sin confirmar (?)</span></div>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -381,18 +411,44 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
         </select>
       </label>
     </div>
+    <label class="chk"><input type="checkbox" name="noTime"> Todavía sin hora (aún no la ha fijado la federación)</label>
+    <label class="chk"><input type="checkbox" name="confirmed" checked> Horario confirmado</label>
     <label class="fld">Lugar del partido <small>(nombre o dirección, con el pueblo)</small>
-      <input type="text" name="venue" maxlength="40" placeholder="Ej. Campo municipal" list="venues" autocomplete="off">
+      <input type="text" name="venue" maxlength="60" placeholder="Ej. Campo municipal" list="venues" autocomplete="off">
       <datalist id="venues"></datalist>
     </label>
     <label class="fld">Entrenador<input type="text" name="coach" maxlength="40" placeholder="Nombre del entrenador"></label>
-    <label class="fld">Equipo <small>(opcional)</small><input type="text" name="team" maxlength="30" placeholder="Ej. Sub-14"></label>
+    <label class="fld">Equipo <small>(opcional)</small><input type="text" name="team" maxlength="60" placeholder="Ej. Sub-14"></label>
     <div class="fmsg" id="fmsg" aria-live="polite"></div>
     <div class="actions">
       <button type="button" class="btn danger" id="del" hidden>Eliminar</button>
       <span class="sp"></span>
       <button type="button" class="btn" id="cancel">Cancelar</button>
       <button type="submit" class="btn primary">Guardar partido</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- iSquad -->
+<dialog id="qdlg" aria-labelledby="qTitle">
+  <form id="qf" novalidate>
+    <h2 id="qTitle">Partidos de Club Vòlei Sant Celoni</h2>
+    <p class="hint" id="qinfo"></p>
+    <div class="box">
+      <b>Categorías</b>
+      <div id="qlist"></div>
+    </div>
+    <div class="row2">
+      <label class="fld">Duración de cada partido
+        <select id="qdur"><option value="75">1 h 15</option><option value="90" selected>1 h 30</option><option value="105">1 h 45</option><option value="120">2 h</option></select></label>
+      <label class="chk"><input type="checkbox" id="qpast" checked> Incluir los ya jugados</label>
+    </div>
+    <p class="hint">Los partidos entran como <b>horario sin confirmar</b>: cuando lo confirmes (con el club rival o la federación), pulsa «Confirmar horario». Si vuelves a importar y iSquad cambia una fecha u hora, el partido vuelve a quedar sin confirmar y te muestra el horario anterior.</p>
+    <div class="fmsg" id="qmsg" aria-live="polite"></div>
+    <div class="actions">
+      <span class="sp"></span>
+      <button type="button" class="btn" id="qcancel">Cerrar</button>
+      <button type="button" class="btn primary" id="qgo">Añadir al calendario</button>
     </div>
   </form>
 </dialog>
@@ -420,6 +476,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
         <label class="fld">Margen extra (min)<input type="number" name="buffer" min="0" max="120" step="5" inputmode="numeric"></label>
         <label class="fld">Si no se conoce (min)<input type="number" name="def" min="0" max="300" step="5" inputmode="numeric"></label>
       </div>
+      <label class="chk"><input type="checkbox" name="coachOnly"> Avisar de superposiciones y trayectos solo cuando es el mismo entrenador <small>(útil con muchas categorías)</small></label>
     </div>
 
     <div class="box">
@@ -523,7 +580,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       const r=localStorage.getItem(TSTORE);
       if(r){
         const c=JSON.parse(r);
-        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC'};
+        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachOnly:!!c.coachOnly};
       }
     }catch(e){}
     return null;
@@ -561,7 +618,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   let matches=load(),seeded=false;
   if(!Array.isArray(matches)){matches=seed();save();seeded=true;}
   let cfg=loadCfg();
-  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC'};saveCfg();}
+  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachOnly:false};saveCfg();}
   let geo=loadGeo();
 
   const now=new Date();
@@ -584,6 +641,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   // Compara cualquier pareja de partidos del mismo día.
   // Devuelve null, {kind:'overlap'} o {kind:'travel',gap,need,est,first,second}
   function evalPair(a,b){
+    if(cfg.coachOnly&&!(a.coach&&a.coach===b.coach))return null;
     if(overlaps(a,b))return {kind:'overlap'};
     const first=span(a)[0]<=span(b)[0]?a:b, second=first===a?b:a;
     const gap=span(second)[0]-span(first)[1];
@@ -597,6 +655,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     const add=(m,o,r,isFirst)=>{if(!map.has(m.id))map.set(m.id,[]);map.get(m.id).push(Object.assign({o,isFirst},r))};
     Object.values(byDay).forEach(l=>{
       for(let i=0;i<l.length;i++)for(let j=i+1;j<l.length;j++){
+        if(l[i].noTime||l[j].noTime)continue;
         const r=evalPair(l[i],l[j]);
         if(r){add(l[i],l[j],r,r.first===l[i]);add(l[j],l[i],r,r.first===l[j]);}
       }
@@ -640,6 +699,8 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   let geoChain=Promise.resolve(),lastGeo=0;
   function geocode(place){
     const c=parseCoords(place);if(c)return Promise.resolve(c);
+    const nv=norm(place),vm=matches.find(x=>norm(x.venue)===nv&&Number.isFinite(x.lat)&&Number.isFinite(x.lon));
+    if(vm)return Promise.resolve({lat:vm.lat,lon:vm.lon,name:place});
     const area=cfg.area.trim();
     const q=place.trim()+(area&&!norm(place).includes(norm(area))?', '+area:'');
     const ck=norm(q);
@@ -687,7 +748,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     if(ms)netTimer=setTimeout(()=>{netmsg.hidden=true},ms);
   }
   // Calcula los trayectos que faltan entre los lugares de los partidos de un día.
-  async function ensureDay(dateKey){
+  async function ensureDay(dateKey,quiet){
     const list=matches.filter(m=>m.date===dateKey);
     const todo=[];
     for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
@@ -697,15 +758,18 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       if(Number.isFinite(cfg.pairs[k])||failedKeys.has(k)||todo.some(x=>x.k===k))continue;
       todo.push({k,va:list[i].venue,vb:list[j].venue});
     }
-    if(!todo.length)return;
-    say('Calculando trayectos…','');
+    if(!todo.length)return {done:0,fails:[]};
+    if(!quiet)say('Calculando trayectos…','');
     let done=0;const fails=[];
     for(const t of todo){
       try{await ensurePair(t.va,t.vb);done++;render();}
       catch(e){fails.push(errText(e));}
     }
-    if(fails.length)say(fails[0],'bad');
-    else say(`${done} ${done===1?'trayecto calculado':'trayectos calculados'} por ruta en coche.`,'ok',5000);
+    if(!quiet){
+      if(fails.length)say(fails[0],'bad');
+      else say(`${done} ${done===1?'trayecto calculado':'trayectos calculados'} por ruta en coche.`,'ok',5000);
+    }
+    return {done,fails};
   }
 
   /* ---------- header / stats ---------- */
@@ -718,6 +782,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     const loc=mm.filter(m=>m.side==='L').length, vis=mm.length-loc;
     const bad=mm.filter(m=>status(m,cm)==='bad').length;
     const warn=mm.filter(m=>status(m,cm)==='warn').length;
+    const unc=mm.filter(m=>m.confirmed===false&&!m.done).length;
     document.getElementById('stats').innerHTML=
       `<div class="stat"><b>${mm.length}</b><span>partidos en el mes</span></div>`+
       `<div class="stat"><b>${mm.filter(m=>m.club==='SC').length}</b><span><i class="dot sc"></i>Sant Celoni</span></div>`+
@@ -725,7 +790,8 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       `<div class="stat"><b>${loc}</b><span>locales</span></div>`+
       `<div class="stat"><b>${vis}</b><span>visitantes</span></div>`+
       `<div class="stat ${bad?'warn':''}"><b>${bad}</b><span>${bad===1?'partido superpuesto':'partidos superpuestos'}</span></div>`+
-      `<div class="stat ${warn?'travel':''}"><b>${warn}</b><span>${warn===1?'partido sin tiempo de trayecto':'partidos sin tiempo de trayecto'}</span></div>`;
+      `<div class="stat ${warn?'travel':''}"><b>${warn}</b><span>${warn===1?'partido sin tiempo de trayecto':'partidos sin tiempo de trayecto'}</span></div>`+
+      `<div class="stat ${unc?'unc':''}"><b>${unc}</b><span>${unc===1?'horario sin confirmar':'horarios sin confirmar'}</span></div>`;
   }
 
   /* ---------- month grid ---------- */
@@ -733,9 +799,10 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     const st=status(m,cm);
     const local=m.side==='L';
     const cross=crossText(m,cm);
-    const label=`${clubName(m)}: ${local?'Local':'Visitante'} ${m.time} ${m.rival}${m.venue?', en '+m.venue:''}${m.coach?', entrenador '+m.coach:''}${cross?'. '+cross:''}`;
-    return `<button type="button" class="chip ${st} ${clubCls(m)} ${local?'local':'away'}" data-edit="${m.id}" title="${esc(label)}" aria-label="${esc(label)}">`+
-      `<span class="tag">${local?'L':'V'}</span><span class="ct"><span class="l1"><span class="t">${m.time}</span><span class="rv">${esc(m.rival)}</span></span>`+
+    const unc=m.confirmed===false&&!m.done,tm=m.noTime?'¿hora?':(m.time+(unc?'?':''));
+    const label=`${clubName(m)}: ${local?'Local':'Visitante'} ${m.noTime?'hora por confirmar':m.time+(unc?' (sin confirmar)':'')} ${m.rival}${m.venue?', en '+m.venue:''}${m.coach?', entrenador '+m.coach:''}${cross?'. '+cross:''}`;
+    return `<button type="button" class="chip ${st} ${clubCls(m)} ${local?'local':'away'}${unc||m.noTime?' unc':''}${m.done?' done':''}" data-edit="${m.id}" title="${esc(label)}" aria-label="${esc(label)}">`+
+      `<span class="tag">${local?'L':'V'}</span><span class="ct"><span class="l1"><span class="t">${tm}</span><span class="rv">${esc(m.rival)}</span></span>`+
       (m.venue?`<span class="vn">${esc(m.venue)}</span>`:'')+
       (m.coach?`<span class="co">Entr. ${esc(m.coach)}</span>`:'')+
       (cross?`<span class="cx">${esc(cross)}</span>`:'')+`</span>${st!=='ok'?ALERT:''}</button>`;
@@ -805,8 +872,10 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   function renderDay(cm){
     const dt=fromKey(selected);
     const list=matches.filter(m=>m.date===selected).sort(byStart);
+    const timed=list.filter(m=>!m.noTime);
     const nL=list.filter(m=>m.side==='L').length,nV=list.length-nL;
-    const sub=list.length?`${list.length} ${list.length===1?'partido':'partidos'}: ${nL} ${nL===1?'local':'locales'}, ${nV} ${nV===1?'visitante':'visitantes'}`:'Sin partidos programados';
+    const nU=list.filter(m=>m.confirmed===false&&!m.done).length;
+    const sub=list.length?`${list.length} ${list.length===1?'partido':'partidos'}: ${nL} ${nL===1?'local':'locales'}, ${nV} ${nV===1?'visitante':'visitantes'}${nU?` · ${nU} sin confirmar`:''}`:'Sin partidos programados';
     let html=`<div class="dhead"><div><h2 class="dtitle">${esc(cap(fmtDay.format(dt)))}</h2><p class="dsub">${sub}</p></div>`+
       `<div class="btns"><button type="button" class="btn primary" data-add="${selected}">Añadir</button><button type="button" class="btn icon sheetclose" data-close-day aria-label="Cerrar el detalle del día">✕</button></div></div>`;
 
@@ -814,11 +883,14 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       html+=`<div class="empty"><p>No hay partidos este día.</p><button type="button" class="btn" data-add="${selected}">Añadir un partido</button></div>`;
       document.getElementById('day').innerHTML=html;return;
     }
+    if(list.filter(m=>m.confirmed===false&&!m.noTime&&!m.done).length>1){
+      html+=`<div class="confall"><button type="button" class="btn" data-confirm-day="${selected}">Confirmar los horarios del día</button></div>`;
+    }
 
     const ovPairs=[],trPairs=[];
-    for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
-      const r=evalPair(list[i],list[j]);if(!r)continue;
-      if(r.kind==='overlap')ovPairs.push([list[i],list[j]]);else trPairs.push(r);
+    for(let i=0;i<timed.length;i++)for(let j=i+1;j<timed.length;j++){
+      const r=evalPair(timed[i],timed[j]);if(!r)continue;
+      if(r.kind==='overlap')ovPairs.push([timed[i],timed[j]]);else trPairs.push(r);
     }
     if(ovPairs.length){
       const d=m=>{const [s,e]=span(m);return `${clubTag(m)}${esc(m.rival)} (${fmt(s)}–${fmt(e)})`};
@@ -832,41 +904,55 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
           return `<li>${f.coach?esc(f.coach)+': ':''}${esc(f.rival)} (${esc(f.venue||'sin lugar')}, termina ${fmt(fe)}) a ${esc(s.rival)} (${esc(s.venue||'sin lugar')}, empieza ${fmt(ss)}): trayecto ${r.need} min${r.est?' (estimado)':''}, hay ${r.gap} min. Faltan ${r.need-r.gap} min.</li>`;
         }).join('')+`</ul></div>`;
     }
-    const okT=okTravelLines(list);
-    if(!ovPairs.length&&!trPairs.length&&list.length>1){
+    const okT=okTravelLines(timed);
+    if(!ovPairs.length&&!trPairs.length&&timed.length>1){
       html+=`<div class="okmsg">Sin superposiciones ni problemas de trayecto.${okT.length?`<ul>${okT.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div>`;
     }else if(okT.length){
       html+=`<div class="okmsg"><b>Trayectos con margen suficiente</b><ul>${okT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
     }
 
-    const HOUR=64,PX=HOUR/60;
-    const lo=Math.min(8,Math.floor(Math.min(...list.map(m=>span(m)[0]))/60));
-    const hi=Math.max(22,Math.ceil(Math.max(...list.map(m=>span(m)[1]))/60));
-    const lay=layoutCols(list);
-    let lines='';
-    for(let h=lo;h<=hi;h++)lines+=`<div class="hl" style="top:${(h-lo)*HOUR}px"><span>${pad(h%24)}:00</span></div>`;
-    const evs=list.map(m=>{
-      const [s,e]=span(m);const L=lay.get(m.id);const st=status(m,cm);const local=m.side==='L';
-      const top=(s-lo*60)*PX,h=Math.max((e-s)*PX,78);
-      const meta=[clubName(m),m.team,m.venue&&('Lugar: '+m.venue)].filter(Boolean).join(' · ');
-      return `<button type="button" class="ev ${st} ${clubCls(m)} ${local?'local':'away'}" data-edit="${m.id}" `+
-        `style="top:${top}px;height:${h-2}px;left:calc(${L.col}*100%/${L.cols});width:calc(100%/${L.cols} - 4px)" `+
-        `aria-label="${esc((local?'Local':'Visitante')+' '+fmt(s)+' a '+fmt(e)+' '+m.rival+(st==='bad'?', se superpone':st==='warn'?', no da tiempo al trayecto':''))}">`+
-        `<span class="l1"><span class="tag">${local?'L':'V'}</span><span class="tm">${fmt(s)}–${fmt(e)}</span>${st!=='ok'?ALERT:''}</span>`+
-        `<span class="rv">${esc(m.rival)}</span>`+
-        `${m.coach?`<span class="mt">Entrenador: ${esc(m.coach)}</span>`:''}${meta?`<span class="mt">${esc(meta)}</span>`:''}</button>`;
-    }).join('');
     html+=`<div class="dlist">`+list.map(m=>{
-      const st=status(m,cm),local=m.side==='L',[s0,e0]=span(m),cross=crossText(m,cm);
+      const st=status(m,cm),local=m.side==='L',cross=crossText(m,cm),unc=m.confirmed===false&&!m.done;
+      let when='Hora por confirmar';
+      if(!m.noTime){const [s0,e0]=span(m);when=`${fmt(s0)}–${fmt(e0)}`;}
       const l2=[clubName(m),m.team].filter(Boolean).join(' · ');
-      return `<button type="button" class="dcard ${st} ${clubCls(m)} ${local?'local':'away'}" data-edit="${m.id}">`+
-        `<span class="tag">${local?'L':'V'}</span><span class="dc"><b>${fmt(s0)}–${fmt(e0)} ${esc(m.rival)}</b>`+
+      const place=[m.venue,m.court].filter(Boolean).join(' · ');
+      const notes=[];
+      if(m.done)notes.push('Jugado'+(m.result?`: ${m.result}`:''));
+      if(m.prev)notes.push('Antes: '+m.prev);
+      else if(m.isq&&!m.fed&&!m.done)notes.push('Fecha provisional en iSquad');
+      return `<div class="dcard ${st} ${clubCls(m)} ${local?'local':'away'}${unc||m.noTime?' unc':''}${m.done?' done':''}" data-edit="${m.id}" role="button" tabindex="0">`+
+        `<span class="tag">${local?'L':'V'}</span><span class="dc"><b>${when} ${esc(m.rival)}</b>`+
         `<span>${esc(l2)}</span>`+
         (m.coach?`<span>Entrenador: ${esc(m.coach)}</span>`:'')+
-        (m.venue?`<span>Lugar: ${esc(m.venue)}</span>`:'')+
-        (cross?`<span class="dx">${esc(cross)}</span>`:'')+`</span></button>`;
+        (place?`<span>Lugar: ${esc(place)}</span>`:(m.isq?'<span>Lugar: sin asignar todavía</span>':''))+
+        (cross?`<span class="dx">${esc(cross)}</span>`:'')+
+        (notes.length?`<span class="dn2">${esc(notes.join(' · '))}</span>`:'')+
+        (unc?`<span class="dact"><button type="button" class="btn mini" data-confirm="${m.id}">${m.noTime?'Poner hora':'Confirmar horario'}</button></span>`:'')+
+        `</span></div>`;
     }).join('')+`</div>`;
-    html+=`<div class="tl" style="height:${(hi-lo)*HOUR}px">${lines}<div class="evs">${evs}</div></div>`;
+
+    if(timed.length){
+      const HOUR=64,PX=HOUR/60;
+      const lo=Math.min(8,Math.floor(Math.min(...timed.map(m=>span(m)[0]))/60));
+      const hi=Math.max(22,Math.ceil(Math.max(...timed.map(m=>span(m)[1]))/60));
+      const lay=layoutCols(timed);
+      let lines='';
+      for(let h=lo;h<=hi;h++)lines+=`<div class="hl" style="top:${(h-lo)*HOUR}px"><span>${pad(h%24)}:00</span></div>`;
+      const evs=timed.map(m=>{
+        const [s,e]=span(m);const L=lay.get(m.id);const st=status(m,cm);const local=m.side==='L';
+        const top=(s-lo*60)*PX,h=Math.max((e-s)*PX,78);
+        const meta=[clubName(m),m.team,m.venue&&('Lugar: '+m.venue)].filter(Boolean).join(' · ');
+        const unc=m.confirmed===false&&!m.done;
+        return `<button type="button" class="ev ${st} ${clubCls(m)} ${local?'local':'away'}${unc?' unc':''}${m.done?' done':''}" data-edit="${m.id}" `+
+          `style="top:${top}px;height:${h-2}px;left:calc(${L.col}*100%/${L.cols});width:calc(100%/${L.cols} - 4px)" `+
+          `aria-label="${esc((local?'Local':'Visitante')+' '+fmt(s)+' a '+fmt(e)+' '+m.rival+(unc?', horario sin confirmar':'')+(st==='bad'?', se superpone':st==='warn'?', no da tiempo al trayecto':''))}">`+
+          `<span class="l1"><span class="tag">${local?'L':'V'}</span><span class="tm">${fmt(s)}–${fmt(e)}</span>${st!=='ok'?ALERT:''}</span>`+
+          `<span class="rv">${esc(m.rival)}</span>`+
+          `${m.coach?`<span class="mt">Entrenador: ${esc(m.coach)}</span>`:''}${meta?`<span class="mt">${esc(meta)}</span>`:''}</button>`;
+      }).join('');
+      html+=`<div class="tl" style="height:${(hi-lo)*HOUR}px">${lines}<div class="evs">${evs}</div></div>`;
+    }
     document.getElementById('day').innerHTML=html;
   }
 
@@ -892,14 +978,15 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   let editing=null,armed=false;
 
   function candidate(){
-    return {id:editing?editing.id:'__new',date:f.date.value,time:f.time.value,dur:Number(f.dur.value),
+    return {id:editing?editing.id:'__new',date:f.date.value,time:f.noTime.checked?'':f.time.value,dur:Number(f.dur.value),
       coach:f.coach.value.trim(),venue:f.venue.value.trim(),rival:f.rival.value.trim()||'este partido'};
   }
   function checkForm(){
     const c=candidate();
+    if(f.noTime.checked){fmsg.className='fmsg';fmsg.textContent='Sin hora todavía: no se comprueban superposiciones ni trayectos hasta que la pongas.';return;}
     if(!c.date||!c.time){fmsg.className='fmsg';fmsg.textContent='Elige fecha y hora para comprobar superposiciones y trayectos.';return;}
     const ov=[],tr=[];
-    matches.filter(m=>m.id!==c.id&&m.date===c.date).forEach(m=>{
+    matches.filter(m=>m.id!==c.id&&m.date===c.date&&!m.noTime).forEach(m=>{
       const r=evalPair(c,m);if(!r)return;
       if(r.kind==='overlap')ov.push(m);else tr.push(r);
     });
@@ -913,6 +1000,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     else{fmsg.className='fmsg';fmsg.textContent='Sin conflicto: no se superpone ni hay problemas de trayecto.';}
   }
   ['date','time','dur','coach','venue','rival'].forEach(n=>{f[n].addEventListener('input',checkForm);f[n].addEventListener('change',checkForm)});
+  f.noTime.addEventListener('change',()=>{f.time.disabled=f.noTime.checked;if(f.noTime.checked)f.confirmed.checked=false;checkForm();});
   async function autoRoutes(){
     const c=candidate();if(!c.venue||!c.date)return;
     const others=matches.filter(m=>m.id!==c.id&&m.date===c.date&&norm(m.venue)&&norm(m.venue)!==norm(c.venue)&&!Number.isFinite(cfg.pairs[pk(m.venue,c.venue)]));
@@ -936,7 +1024,10 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     f.club.value=(m&&m.club)||cfg.lastClub||'SC';
     f.rival.value=m?m.rival:'';
     f.date.value=m?m.date:(dateKey||selected);
-    f.time.value=m?m.time:'18:00';
+    f.noTime.checked=!!(m&&m.noTime);
+    f.time.disabled=f.noTime.checked;
+    f.time.value=m?(m.noTime?'':m.time):'18:00';
+    f.confirmed.checked=m?(m.confirmed!==false&&!m.noTime):true;
     if(m&&![...f.dur.options].some(o=>o.value===String(m.dur))){const o=document.createElement('option');o.value=String(m.dur);o.textContent=m.dur+' min';f.dur.appendChild(o);}
     f.dur.value=m?String(m.dur):'120';
     f.venue.value=m?(m.venue||''):'';
@@ -955,14 +1046,16 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   f.addEventListener('submit',e=>{
     e.preventDefault();
     const rival=f.rival.value.trim();
-    if(!rival||!f.date.value||!f.time.value){
+    if(!rival||!f.date.value||(!f.noTime.checked&&!f.time.value)){
       fmsg.className='fmsg err';
-      fmsg.textContent=!rival?'Escribe el nombre del rival.':'Completa la fecha y la hora.';
+      fmsg.textContent=!rival?'Escribe el nombre del rival.':'Completa la fecha y la hora (o marca «Todavía sin hora»).';
       if(!rival)f.rival.focus();
       return;
     }
-    const data={date:f.date.value,time:f.time.value,dur:Number(f.dur.value),rival,side:f.side.value,team:f.team.value.trim(),coach:f.coach.value.trim(),venue:f.venue.value.trim(),club:f.club.value||cfg.lastClub||'SC'};
+    const nt=f.noTime.checked;
+    const data={date:f.date.value,time:nt?'00:00':f.time.value,dur:Number(f.dur.value),rival,side:f.side.value,team:f.team.value.trim(),coach:f.coach.value.trim(),venue:f.venue.value.trim(),club:f.club.value||cfg.lastClub||'SC',noTime:nt,confirmed:nt?false:f.confirmed.checked};
     cfg.lastClub=data.club;saveCfg();
+    if(data.confirmed&&editing)delete editing.prev;
     if(editing){Object.assign(editing,data);}
     else matches.push(Object.assign({id:uid()},data));
     save();
@@ -984,7 +1077,20 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     cfg.def=Number.isFinite(d)&&d>=0?Math.min(d,300):30;
     cfg.buffer=Number.isFinite(b)&&b>=0?Math.min(b,120):10;
     cfg.area=tf.area.value.trim();
+    cfg.coachOnly=!!tf.coachOnly.checked;
     saveCfg();
+  }
+  function sameDayPairs(){
+    const byDay=new Map();
+    matches.forEach(m=>{const n=norm(m.venue);if(!n)return;if(!byDay.has(m.date))byDay.set(m.date,new Map());byDay.get(m.date).set(n,String(m.venue).trim());});
+    const seen=new Set(),out=[];
+    byDay.forEach(mp=>{const a=[...mp.values()];for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){const k=pk(a[i],a[j]);if(!seen.has(k)){seen.add(k);out.push([a[i],a[j]]);}}});
+    return out.sort((x,y)=>(x[0]+x[1]).localeCompare(y[0]+y[1],'es'));
+  }
+  function pairsToList(){
+    const vs=venueList();
+    if(vs.length<=10){const o=[];for(let i=0;i<vs.length;i++)for(let j=i+1;j<vs.length;j++)o.push([vs[i],vs[j]]);return {list:o,limited:false};}
+    return {list:sameDayPairs(),limited:true};
   }
   function renderPairs(){
     const vs=venueList();
@@ -993,17 +1099,19 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     if(vs.length<2){
       html='<p class="hint">Añade el lugar a tus partidos (al menos dos lugares distintos) para ver aquí los trayectos entre ellos.</p>';
     }else{
-      for(let i=0;i<vs.length;i++)for(let j=i+1;j<vs.length;j++){
-        const k=pk(vs[i],vs[j]);const v=cfg.pairs[k];
+      const {list,limited}=pairsToList();
+      if(limited)html+=`<p class="hint">Hay ${vs.length} lugares distintos: aquí solo salen los ${list.length} trayectos que importan, entre lugares con partidos el mismo día.</p>`;
+      list.forEach(([a,b])=>{
+        const k=pk(a,b);const v=cfg.pairs[k];
         const tag=Number.isFinite(v)?(cfg.src[k]==='auto'?'calculado por ruta':'indicado a mano'):'sin calcular';
-        html+=`<label class="pair"><span>${esc(vs[i])} ↔ ${esc(vs[j])}<small>${tag}</small></span>`+
-          `<input type="number" min="0" max="300" step="5" inputmode="numeric" data-k="${esc(k)}" data-prev="${Number.isFinite(v)?v:''}" value="${Number.isFinite(v)?v:''}" placeholder="${cfg.def} min" aria-label="Minutos entre ${esc(vs[i])} y ${esc(vs[j])}"></label>`;
-      }
+        html+=`<label class="pair"><span>${esc(a)} ↔ ${esc(b)}<small>${tag}</small></span>`+
+          `<input type="number" min="0" max="300" step="5" inputmode="numeric" data-k="${esc(k)}" data-prev="${Number.isFinite(v)?v:''}" value="${Number.isFinite(v)?v:''}" placeholder="${cfg.def} min" aria-label="Minutos entre ${esc(a)} y ${esc(b)}"></label>`;
+      });
     }
     document.getElementById('pairs').innerHTML=html;
   }
   function openTravel(){
-    tf.def.value=cfg.def;tf.buffer.value=cfg.buffer;tf.area.value=cfg.area;
+    tf.def.value=cfg.def;tf.buffer.value=cfg.buffer;tf.area.value=cfg.area;tf.coachOnly.checked=!!cfg.coachOnly;
     tf.torig.value='';tf.tdest.value='';tres.hidden=true;
     renderPairs();
     if(typeof tdlg.showModal==='function')tdlg.showModal();else tdlg.setAttribute('open','');
@@ -1036,8 +1144,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
 
   document.getElementById('tall').onclick=async()=>{
     applySettings();
-    const vs=venueList(),todo=[];
-    for(let i=0;i<vs.length;i++)for(let j=i+1;j<vs.length;j++)if(!Number.isFinite(cfg.pairs[pk(vs[i],vs[j])]))todo.push([vs[i],vs[j]]);
+    const todo=pairsToList().list.filter(([a,b])=>!Number.isFinite(cfg.pairs[pk(a,b)]));
     tres.hidden=false;
     if(!todo.length){tres.className='fmsg';tres.textContent='Todos los trayectos entre tus lugares ya están calculados o indicados.';return;}
     let done=0,fails=0,last='';
@@ -1492,9 +1599,95 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   if(narrowMQ.addEventListener)narrowMQ.addEventListener('change',onMQ);else if(narrowMQ.addListener)narrowMQ.addListener(onMQ);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('sheet-open')&&!document.querySelector('dialog[open]'))closeSheet();});
 
+  /* ---------- iSquad: partidos del Club Vòlei Sant Celoni ---------- */
+  let ISQc;
+  const getISQ=()=>{if(ISQc!==undefined)return ISQc;try{ISQc=JSON.parse(document.getElementById('isq-data').textContent);}catch(e){ISQc=null;}return ISQc;};
+  const qdlg=document.getElementById('qdlg'),qlist=document.getElementById('qlist'),qmsg=document.getElementById('qmsg');
+  const shortDay=k=>{const d=fromKey(k);return `${d.getDate()}/${d.getMonth()+1}`;};
+  function openIsq(){
+    const ISQ=getISQ();
+    if(!ISQ){say('No se encuentran los datos de iSquad en esta versión.','bad',6000);return;}
+    document.getElementById('qinfo').textContent=`Datos leídos de iSquad el ${shortDay(ISQ.fecha)}/${ISQ.fecha.slice(0,4)}. Elige las categorías que quieres añadir o actualizar.`;
+    qlist.innerHTML=ISQ.teams.map(t=>{
+      const total=t.m.length,sinHora=t.m.filter(x=>!x.t).length;
+      const ya=matches.filter(m=>m.isq&&m.isq.startsWith(t.id+'-')).length;
+      const coach=t.coach?`Entrenador: ${esc(t.coach)}`:(t.coachNote==='pendiente'?'Entrenador: pendiente de leer en iSquad':'Entrenador: no figura en iSquad');
+      return `<label class="qrow"><input type="checkbox" value="${t.id}" checked><span><b>${esc(t.cat)}</b>`+
+        `<small>${coach}</small><small>${total} partidos${sinHora?` · ${sinHora} sin hora fijada`:''}${ya?` · ${ya} ya en tu calendario`:''}</small>`+
+        `<small><a href="${esc(t.url)}" target="_blank" rel="noopener">Ver en iSquad</a></small></span></label>`;
+    }).join('');
+    qmsg.className='fmsg';qmsg.textContent='';
+    if(typeof qdlg.showModal==='function')qdlg.showModal();else qdlg.setAttribute('open','');
+  }
+  async function isqRoutes(summary){
+    const ds=[...new Set(matches.filter(m=>m.isq&&m.date>=todayKey&&!m.noTime).map(m=>m.date))].sort();
+    let done=0,fails=0;
+    for(const dk of ds){
+      const vs=new Set(matches.filter(m=>m.date===dk&&!m.noTime&&norm(m.venue)).map(m=>norm(m.venue)));
+      if(vs.size>1){const r=await ensureDay(dk,true);done+=r.done;fails+=r.fails.length;}
+    }
+    if(!done&&!fails)return;
+    say(summary+(done?` ${done} ${done===1?'trayecto calculado':'trayectos calculados'} por ruta.`:'')+
+      (fails?` No se pudieron calcular ${fails} (sin conexión o servicio no disponible): puedes indicarlos a mano en «Trayectos».`:''),fails?'bad':'ok',14000);
+  }
+  function runIsq(){
+    const ISQ=getISQ();if(!ISQ)return;
+    const sel=new Set([...qlist.querySelectorAll('input:checked')].map(i=>Number(i.value)));
+    if(!sel.size){qmsg.className='fmsg err';qmsg.textContent='Marca al menos una categoría.';return;}
+    const dur=Number(document.getElementById('qdur').value)||90,incPast=document.getElementById('qpast').checked;
+    let add=0,upd=0,rec=0;const fresh=[];
+    ISQ.teams.filter(t=>sel.has(t.id)).forEach(t=>{
+      t.m.forEach(x=>{
+        if(!incPast&&x.s==='finalizado')return;
+        const key=t.id+'-'+x.j,t0=x.t||'';
+        const base={rival:x.r,side:x.h?'L':'V',team:t.cat,venue:x.v||'',court:x.c||'',lat:x.la,lon:x.lo,club:'SC',result:x.x||'',done:x.s==='finalizado',fed:!!x.f};
+        let m=matches.find(q=>q.isq===key);
+        if(!m){
+          m=Object.assign({id:uid(),date:x.d,time:t0||'00:00',dur,noTime:!t0,confirmed:x.s==='finalizado',coach:t.coach||'',isq:key,isqD:x.d,isqT:t0,isqCoach:t.coach||''},base);
+          matches.push(m);add++;fresh.push(m.date);
+        }else{
+          Object.assign(m,base);
+          if(!m.coach||m.coach===m.isqCoach)m.coach=t.coach||m.coach||'';
+          m.isqCoach=t.coach||'';
+          if(m.isqD!==x.d||m.isqT!==t0){
+            if(m.confirmed===true&&!m.done){m.prev=`${shortDay(m.date)}${m.noTime?'':' '+m.time}`;rec++;}
+            m.date=x.d;m.time=t0||'00:00';m.noTime=!t0;
+            if(!m.done)m.confirmed=false;
+            m.isqD=x.d;m.isqT=t0;
+          }
+          upd++;
+        }
+      });
+    });
+    save();
+    const up=fresh.filter(d=>d>=todayKey).sort()[0]||fresh.sort()[0];
+    if(up){const d=fromKey(up);view={y:d.getFullYear(),m:d.getMonth()};selected=up;}
+    qdlg.close();render();
+    const summary=`${add} ${add===1?'partido añadido':'partidos añadidos'}${upd?`, ${upd} ${upd===1?'actualizado':'actualizados'}`:''}${rec?`. ${rec} ${rec===1?'ha cambiado de horario y vuelve':'han cambiado de horario y vuelven'} a «sin confirmar»`:''}.`;
+    say(summary,'ok',8000);
+    isqRoutes(summary);
+  }
+  document.getElementById('isqBtn').onclick=openIsq;
+  document.getElementById('qcancel').onclick=()=>{if(qdlg.open)qdlg.close();};
+  qdlg.addEventListener('click',e=>{if(e.target===qdlg)qdlg.close();});
+  document.getElementById('qgo').onclick=runIsq;
+  function confirmMatch(id){
+    const m=matches.find(x=>x.id===id);if(!m)return;
+    if(m.noTime){selected=m.date;openDialog(m);return;}
+    m.confirmed=true;delete m.prev;save();render();
+  }
+  function confirmDay(dk){
+    matches.forEach(m=>{if(m.date===dk&&m.confirmed===false&&!m.noTime&&!m.done){m.confirmed=true;delete m.prev;}});
+    save();render();
+  }
+
   /* ---------- eventos ---------- */
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-close-day]')||e.target.id==='sheetbd'){closeSheet();return;}
+    const cf=e.target.closest('[data-confirm]');
+    if(cf){e.stopPropagation();confirmMatch(cf.dataset.confirm);return;}
+    const cd=e.target.closest('[data-confirm-day]');
+    if(cd){e.stopPropagation();confirmDay(cd.dataset.confirmDay);return;}
     const ed=e.target.closest('[data-edit]');
     if(ed){e.stopPropagation();const m=matches.find(x=>x.id===ed.dataset.edit);if(m){selected=m.date;openDialog(m);}return;}
     const ad=e.target.closest('[data-add]');
@@ -1509,6 +1702,9 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       else{const again=document.querySelector(`[data-day="${selected}"]`);if(again)again.focus({preventScroll:true});}
     }
   });
+  document.getElementById('day').addEventListener('keydown',e=>{
+    if((e.key==='Enter'||e.key===' ')&&e.target.matches('.dcard')){e.preventDefault();e.target.click();}
+  });
   document.getElementById('grid').addEventListener('keydown',e=>{
     if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-day]')){e.preventDefault();e.target.click();}
   });
@@ -1521,6 +1717,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   render();ensureDay(selected);
 })();
 </script>
+<script type="application/json" id="isq-data">{"fecha":"2026-10-15","club":"Club Vòlei Sant Celoni","fuente":"resultadosvoleibol.isquad.es","teams":[{"id":3451,"cat":"Sènior femení · 4a divisió · Grup I","coach":"Juan Manuel Arguelles Velez","coachNote":"","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4074&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=353&id_competicion=1380","m":[{"j":1,"d":"2026-09-26","t":"16:00","h":0,"r":"Sènior Femení Blau","v":"Pavelló Escola Pia Calella","c":"Pista 1","la":41.61214349999999,"lo":2.656716,"f":1,"s":"finalizado","x":"3-0"},{"j":3,"d":"2026-10-18","t":"09:00","h":1,"r":"CV Mataró B","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":1,"s":"pendiente","x":""},{"j":4,"d":"2026-10-24","t":"16:00","h":0,"r":"CV Sant Andreu Blau","v":"CEM Espronceda","c":"Pista 1","la":41.4173276,"lo":2.1898471,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":1,"r":"CV Llinars Groc","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":0,"r":"CV Cabrils","v":"Pavelló Municipal Cabrils","c":"Cabrils 1","la":41.521221,"lo":2.3691317,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":1,"r":"VPMontgat Sènior Femení","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":1,"r":"Sènior Femení Blau","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":0,"r":"CV Mataró B","v":"Poliesportiu Carrer Euskadi","c":"Euskadi P1","la":41.544383,"lo":2.4289263,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"CV Sant Andreu Blau","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":0,"r":"CV Llinars Groc","v":"Pavelló Municipal de Llinars","c":"Llinars 1","la":41.6408301,"lo":2.3999087,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Cabrils","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":0,"r":"VPMontgat Sènior Femení","v":"Poliesportiu Municipal de Montgat","c":"Pista 2","la":41.467931162594,"lo":2.275694079406745,"f":0,"s":"pendiente","x":""}]},{"id":3450,"cat":"Sènior masculí · 3a divisió · Grup D","coach":"Santiago Sancer Navarro","coachNote":"","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4082&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=352&id_competicion=1379","m":[{"j":1,"d":"2026-10-11","t":"12:00","h":0,"r":"Sènior Masculí Verd CVSEP","v":"Pavelló Municipal Quatre Hereus","c":"","la":41.7014928,"lo":2.4379417,"f":1,"s":"finalizado","x":"3-1"},{"j":2,"d":"2026-10-04","t":"14:30","h":1,"r":"AVA Ametlla Verd","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":1,"s":"pendiente","x":""},{"j":3,"d":"2026-10-18","t":"10:00","h":0,"r":"VPM Sènior Masculí","v":"Poliesportiu Municipal de Montgat","c":"Pista 2","la":41.467931162594,"lo":2.275694079406745,"f":1,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"18:00","h":0,"r":"Juvenil Blau VSF","v":"Escola Pau Vila","c":"Pista 1","la":41.3869991,"lo":2.0517068,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":1,"r":"CV Sant Adrià Lila","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":0,"r":"CV Granollers","v":"","c":"","la":null,"lo":null,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":1,"r":"CV Mataró B","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":1,"r":"Sènior Masculí Verd CVSEP","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":0,"r":"AVA Ametlla Verd","v":"Pavelló Municipal l'Ametlla del Vallès","c":"Pista 1","la":41.6703261,"lo":2.2592279,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":1,"r":"VPM Sènior Masculí","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"Juvenil Blau VSF","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":0,"r":"CV Sant Adrià Lila","v":"Poliesportiu Municipal Marina Besòs","c":"Pista 1","la":41.4232868,"lo":2.2318006,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Granollers","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":0,"r":"CV Mataró B","v":"Poliesportiu Carrer Euskadi","c":"Pista 1","la":41.544383,"lo":2.4289263,"f":0,"s":"pendiente","x":""}]},{"id":3448,"cat":"Juvenil masculí · 2a divisió · Grup G","coach":"","coachNote":"pendiente","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4199&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=357&id_competicion=1388","m":[{"j":1,"d":"2026-09-27","t":"09:00","h":1,"r":"CV Llinars","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"finalizado","x":"0-3"},{"j":2,"d":"2026-10-04","t":"11:45","h":0,"r":"CV Sant Adrià A","v":"Poliesportiu Municipal Marina Besòs","c":"Pista 2","la":41.4232868,"lo":2.2318006,"f":0,"s":"pendiente","x":""},{"j":3,"d":"2026-10-18","t":"14:15","h":1,"r":"Costa-Serra Vòlei Badalona JM","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"10:45","h":0,"r":"Vic Vòlei Callis","v":"Pavelló Ausoneta","c":"Ausoneta 1","la":41.9370366,"lo":2.2377965,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":1,"r":"CV Taradell","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":0,"r":"CV Les Franqueses Negre","v":"Can Prat","c":"Pista 1","la":41.6315135,"lo":2.2995046,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":0,"r":"CV Llinars","v":"Pavelló Municipal de Llinars","c":"Llinars 1","la":41.6408301,"lo":2.3999087,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":1,"r":"CV Sant Adrià A","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":0,"r":"Costa-Serra Vòlei Badalona JM","v":"","c":"","la":null,"lo":null,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"Vic Vòlei Callis","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":0,"r":"CV Taradell","v":"Pavelló El Pujoló","c":"Pista 1","la":41.8709571,"lo":2.2814812,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Les Franqueses Negre","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""}]},{"id":3449,"cat":"Juvenil femení · 4a divisió · Grup N","coach":"Magdalena Giribets Monteis","coachNote":"","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4165&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=359&id_competicion=1390","m":[{"j":1,"d":"2026-09-27","t":"10:00","h":0,"r":"CV Torelló","v":"Pavelló Municipal Torelló","c":"Pista 2","la":42.0444435,"lo":2.2589334,"f":1,"s":"finalizado","x":"1-3"},{"j":2,"d":"2026-10-11","t":"12:00","h":1,"r":"Club Voleibol Berga","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":1,"s":"finalizado","x":"1-3"},{"j":3,"d":"2026-10-17","t":"12:30","h":0,"r":"Vallbona Protegim 3 Juvenil","v":"Pavelló Poliesportiu de Can Bassa","c":"Pista 3","la":41.5925989,"lo":2.2889676,"f":1,"s":"pendiente","x":""},{"j":4,"d":"2026-10-24","t":"18:00","h":0,"r":"Dental Company Vòlei Castellar Negre","v":"Pavelló Puigverd","c":"Pista 3","la":41.6137396,"lo":2.0917807,"f":1,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":"09:00","h":0,"r":"CV Taradell 4T","v":"Pavelló El Pujoló","c":"Pista 1","la":41.8709571,"lo":2.2814812,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":1,"r":"Vic Vòlei Callis C","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":1,"r":"CV Torelló","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":0,"r":"Club Voleibol Berga","v":"Pavelló Esports de Berga (Vell)","c":"Pista 1","la":42.0977395,"lo":1.8493922,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":1,"r":"Vallbona Protegim 3 Juvenil","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"Dental Company Vòlei Castellar Negre","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Taradell 4T","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":0,"r":"Vic Vòlei Callis C","v":"Institut Jaume Callis","c":"","la":41.93363964183761,"lo":2.2416023332046464,"f":0,"s":"pendiente","x":""}]},{"id":3239,"cat":"Juvenil femení · 3a divisió · Grup C","coach":"","coachNote":"sin entrenador en iSquad","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4119&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=358&id_competicion=1389","m":[{"j":1,"d":"2026-09-27","t":"13:00","h":1,"r":"Espanyol Rosa","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":1,"s":"finalizado","x":"1-3"},{"j":2,"d":"2026-10-31","t":"16:45","h":0,"r":"CV Vall d'Hebron Alpha","v":"Poliesportiu Egara Olímpics Vall d'Hebron","c":"Pista 1","la":41.427916,"lo":2.1451583,"f":1,"s":"pendiente","x":""},{"j":3,"d":"2026-10-17","t":"16:30","h":0,"r":"AVA Ametlla Verd","v":"Pavelló Municipal l'Ametlla del Vallès","c":"Pista 1","la":41.6703261,"lo":2.2592279,"f":1,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"13:00","h":1,"r":"Alella Club Vòlei","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":0,"r":"CN Sabadell Juvenil Fem Blau","v":"Les Naus · Pavelló 3","c":"Pista central","la":41.5456256,"lo":2.1188029,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":1,"r":"C.E. Gadex","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":0,"r":"CV Cubelles","v":"Polideportivo Municipal Cubelles","c":"Pista 1","la":41.2005209,"lo":1.6603436,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":0,"r":"Espanyol Rosa","v":"","c":"","la":null,"lo":null,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":"13:00","h":1,"r":"CV Vall d'Hebron Alpha","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":1,"r":"AVA Ametlla Verd","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":0,"r":"Alella Club Vòlei","v":"Polideportivo Abelardo Vera","c":"Pista 1","la":41.4905136,"lo":2.2947613,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":1,"r":"CN Sabadell Juvenil Fem Blau","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":0,"r":"C.E. Gadex","v":"Complex Esportiu Municipal Sabadell Sud","c":"Pista 1","la":41.5252656,"lo":2.112055,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":1,"r":"CV Cubelles","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""}]},{"id":3446,"cat":"Cadet masculí · 2a divisió · Grup G","coach":"","coachNote":"pendiente","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4192&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=361&id_competicion=1406","m":[{"j":1,"d":"2026-09-27","t":"10:45","h":1,"r":"CV Llinars","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"finalizado","x":"1-3"},{"j":2,"d":"2026-10-04","t":"10:00","h":0,"r":"CV Sant Adrià A","v":"Poliesportiu Municipal Marina Besòs","c":"Pista 2","la":41.4232868,"lo":2.2318006,"f":0,"s":"pendiente","x":""},{"j":3,"d":"2026-10-18","t":"13:00","h":1,"r":"Costa-Serra Vòlei Badalona CM","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"09:00","h":0,"r":"Vic Vòlei Callis","v":"Pavelló Ausoneta","c":"Ausoneta 1","la":41.9370366,"lo":2.2377965,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":1,"r":"CV Taradell","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":0,"r":"CV Les Franqueses Negre","v":"Can Prat","c":"Pista 1","la":41.6315135,"lo":2.2995046,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":0,"r":"CV Llinars","v":"Pavelló Municipal de Llinars","c":"Llinars 1","la":41.6408301,"lo":2.3999087,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":1,"r":"CV Sant Adrià A","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":0,"r":"Costa-Serra Vòlei Badalona CM","v":"Pabellón La Colina","c":"Pista 3","la":41.4594391,"lo":2.2213814,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"Vic Vòlei Callis","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":0,"r":"CV Taradell","v":"Pavelló El Pujoló","c":"Pista 1","la":41.8709571,"lo":2.2814812,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Les Franqueses Negre","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""}]},{"id":3447,"cat":"Cadet femení · 4a divisió · Grup N","coach":"Eric López Cortina","coachNote":"","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4185&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=363&id_competicion=1395","m":[{"j":1,"d":"2026-09-27","t":"12:00","h":0,"r":"CV Torelló","v":"Pavelló Municipal Torelló","c":"Pista 2","la":42.0444435,"lo":2.2589334,"f":1,"s":"finalizado","x":"0-3"},{"j":2,"d":"2026-10-11","t":"10:00","h":1,"r":"Club Voleibol Berga","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":1,"s":"finalizado","x":"0-3"},{"j":3,"d":"2026-10-17","t":"10:45","h":0,"r":"Vallbona Protegim 3 Cadet","v":"Pavelló Poliesportiu de Can Bassa","c":"Pista 3","la":41.5925989,"lo":2.2889676,"f":1,"s":"pendiente","x":""},{"j":4,"d":"2026-10-24","t":"16:00","h":0,"r":"Dental Company Vòlei Castellar Negre","v":"Pavelló Puigverd","c":"Pista 3","la":41.6137396,"lo":2.0917807,"f":1,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":"11:00","h":0,"r":"CV Taradell 3R","v":"Pavelló El Pujoló","c":"Pista 1","la":41.8709571,"lo":2.2814812,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":1,"r":"Vic Vòlei Callis C","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":1,"r":"CV Torelló","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":0,"r":"Club Voleibol Berga","v":"Pavelló Esports de Berga (Vell)","c":"Pista 1","la":42.0977395,"lo":1.8493922,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":1,"r":"Vallbona Protegim 3 Cadet","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"Dental Company Vòlei Castellar Negre","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Taradell 3R","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":0,"r":"Vic Vòlei Callis C","v":"Institut Jaume Callis","c":"","la":41.93363964183761,"lo":2.2416023332046464,"f":0,"s":"pendiente","x":""}]},{"id":3240,"cat":"Cadet femení · 3a divisió · Grup C","coach":"","coachNote":"sin entrenador en iSquad","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4146&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=362&id_competicion=1394","m":[{"j":1,"d":"2026-09-27","t":"11:00","h":1,"r":"Espanyol Rosa","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":1,"s":"finalizado","x":"3-2"},{"j":2,"d":"2026-10-31","t":"15:00","h":0,"r":"CV Vall d'Hebron Alpha","v":"Poliesportiu Egara Olímpics Vall d'Hebron","c":"Pista 1","la":41.427916,"lo":2.1451583,"f":1,"s":"pendiente","x":""},{"j":3,"d":"2026-10-17","t":"14:45","h":0,"r":"AVA Ametlla Verd","v":"Pavelló Municipal l'Ametlla del Vallès","c":"Pista 1","la":41.6703261,"lo":2.2592279,"f":1,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"11:00","h":1,"r":"Alella Club Vòlei","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":0,"r":"CN Sabadell Cadet Fem Blau","v":"Les Naus · Pavelló 3","c":"Pista central","la":41.5456256,"lo":2.1188029,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":1,"r":"C.E. Gadex","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":0,"r":"CV Cubelles","v":"Polideportivo Municipal Cubelles","c":"Pista 1","la":41.2005209,"lo":1.6603436,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":0,"r":"Espanyol Rosa","v":"Col·legi Sagrat Cor Sarrià","c":"Pista 1","la":41.400195,"lo":2.1182147,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":"11:00","h":1,"r":"CV Vall d'Hebron Alpha","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":1,"r":"AVA Ametlla Verd","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":0,"r":"Alella Club Vòlei","v":"Polideportivo Abelardo Vera","c":"Pista 1","la":41.4905136,"lo":2.2947613,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":1,"r":"CN Sabadell Cadet Fem Blau","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":0,"r":"C.E. Gadex","v":"Complex Esportiu Municipal Sabadell Sud","c":"Pista 1","la":41.5252656,"lo":2.112055,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":1,"r":"CV Cubelles","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""}]},{"id":6947,"cat":"Infantil masculí · 2a divisió · Grup E","coach":"","coachNote":"pendiente","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4170&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=368&id_competicion=1399","m":[{"j":1,"d":"2026-09-26","t":"10:00","h":0,"r":"AVA Ametlla","v":"Pavelló Municipal l'Ametlla del Vallès","c":"Pista 2","la":41.6703261,"lo":2.2592279,"f":0,"s":"finalizado","x":"3-0"},{"j":2,"d":"2026-10-04","t":"11:00","h":1,"r":"FP Escola Sant Gervasi Masculí","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":3,"d":"2026-10-18","t":"10:00","h":0,"r":"CV Figueres","v":"Poliesportiu Roser Llop","c":"Pista 1","la":42.2692042,"lo":2.9513529,"f":0,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"10:00","h":0,"r":"Vòlei Girona","v":"Pavelló Municipal de Pont Major","c":"Pont Major 1","la":42.0099809,"lo":2.8220238,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":1,"r":"CV Les Franqueses Negre","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":0,"r":"CV Olot","v":"Pla de Llacs","c":"Pista 1","la":42.1740536,"lo":2.4830099,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":1,"r":"AVAP Girona","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":1,"r":"AVA Ametlla","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":0,"r":"FP Escola Sant Gervasi Masculí","v":"Escola Sant Gervasi","c":"Pista 3","la":41.5432026,"lo":2.2033203,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":1,"r":"CV Figueres","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":1,"r":"Vòlei Girona","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":0,"r":"CV Les Franqueses Negre","v":"Can Prat","c":"Pista 1","la":41.6315135,"lo":2.2995046,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":1,"r":"CV Olot","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":0,"r":"AVAP Girona","v":"Pavelló Montfalgars","c":"Pista 1","la":41.9722523,"lo":2.8021273,"f":0,"s":"pendiente","x":""}]},{"id":3444,"cat":"Infantil femení · 2a divisió · Grup C","coach":"","coachNote":"pendiente","url":"https://resultadosvoleibol.isquad.es/calendario.php?seleccion=0&id=4128&id_ambito=0&id_territorial=17&id_superficie=1&iframe=0&id_categoria=368&id_competicion=1398","m":[{"j":1,"d":"2026-09-27","t":"09:00","h":1,"r":"Vòlei Girona Vermell","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"finalizado","x":"1-3"},{"j":2,"d":"2026-10-04","t":"09:00","h":0,"r":"Vallbona Protegim B Infantil","v":"Pavelló Poliesportiu de Can Bassa","c":"Pista 2","la":41.5925989,"lo":2.2889676,"f":0,"s":"pendiente","x":""},{"j":3,"d":"2026-10-18","t":"11:00","h":1,"r":"DSV Sant Cugat Infantil Vermell","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":4,"d":"2026-10-25","t":"09:00","h":1,"r":"CE Sant Cugat Titans Groc","v":"Pavelló Sot de les Granotes","c":"Pista 2","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":5,"d":"2026-11-08","t":null,"h":0,"r":"FP Escola Sant Gervasi Fem","v":"Escola Sant Gervasi","c":"Pista 3","la":41.5432026,"lo":2.2033203,"f":0,"s":"pendiente","x":""},{"j":6,"d":"2026-11-15","t":null,"h":1,"r":"CV Taradell 2n","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":7,"d":"2026-11-22","t":null,"h":0,"r":"AVA Ametlla Verd","v":"Pavelló Municipal l'Ametlla del Vallès","c":"Pista 1","la":41.6703261,"lo":2.2592279,"f":0,"s":"pendiente","x":""},{"j":8,"d":"2026-11-29","t":null,"h":0,"r":"Vòlei Girona Vermell","v":"Pavelló Municipal de Pont Major","c":"","la":42.0099809,"lo":2.8220238,"f":0,"s":"pendiente","x":""},{"j":9,"d":"2026-12-13","t":null,"h":1,"r":"Vallbona Protegim B Infantil","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":10,"d":"2026-12-20","t":null,"h":0,"r":"DSV Sant Cugat Infantil Vermell","v":"Valldoreix","c":"Pista 1","la":41.4537387,"lo":2.0415113,"f":0,"s":"pendiente","x":""},{"j":11,"d":"2027-01-10","t":null,"h":0,"r":"CE Sant Cugat Titans Groc","v":"ZEM La Guinardera Sant Cugat","c":"Pista 1","la":41.484795,"lo":2.0591929,"f":0,"s":"pendiente","x":""},{"j":12,"d":"2027-01-17","t":null,"h":1,"r":"FP Escola Sant Gervasi Fem","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""},{"j":13,"d":"2027-01-24","t":null,"h":0,"r":"CV Taradell 2n","v":"","c":"","la":null,"lo":null,"f":0,"s":"pendiente","x":""},{"j":14,"d":"2027-01-31","t":null,"h":1,"r":"AVA Ametlla Verd","v":"Pavelló Sot de les Granotes","c":"Pista 1","la":41.68170569999999,"lo":2.4827973,"f":0,"s":"pendiente","x":""}]}]}</script>
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
