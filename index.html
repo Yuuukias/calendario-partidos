@@ -332,6 +332,9 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   .actionbar{grid-template-columns:1fr 1fr 1.1fr 1.3fr!important}
   .actionbar .btn{font-size:13px;padding:0 3px}
 }
+.clubfilter{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.clubfilter button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;display:inline-flex;gap:8px;align-items:center;min-height:40px}
+.clubfilter button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -355,6 +358,11 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     </div>
   </header>
 
+  <div class="clubfilter" role="group" aria-label="Ver calendario de">
+    <button type="button" data-f="ALL">Todos</button>
+    <button type="button" data-f="SC"><i class="dot sc"></i>Sant Celoni</button>
+    <button type="button" data-f="AM"><i class="dot am"></i>Arenys de Mar</button>
+  </div>
   <div class="legend" aria-label="Leyenda">
     <div class="grp"><span class="gt">Sant Celoni</span>
       <span class="it"><span class="sw scd"></span>Local</span>
@@ -580,7 +588,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
       const r=localStorage.getItem(TSTORE);
       if(r){
         const c=JSON.parse(r);
-        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachOnly:!!c.coachOnly};
+        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachOnly:c.coachOnly===undefined?true:!!c.coachOnly,filter:['SC','AM'].includes(c.filter)?c.filter:'ALL'};
       }
     }catch(e){}
     return null;
@@ -618,7 +626,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   let matches=load(),seeded=false;
   if(!Array.isArray(matches)){matches=seed();save();seeded=true;}
   let cfg=loadCfg();
-  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachOnly:false};saveCfg();}
+  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachOnly:true,filter:'ALL'};saveCfg();}
   let geo=loadGeo();
 
   const now=new Date();
@@ -649,8 +657,9 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     if(t.min>gap)return {kind:'travel',gap,need:t.min,est:t.est,first,second};
     return null;
   }
+  function inView(){return matches.filter(m=>cfg.filter==='ALL'||m.club===cfg.filter);}
   function conflictMap(){
-    const byDay={};matches.forEach(m=>{(byDay[m.date]=byDay[m.date]||[]).push(m)});
+    const byDay={};inView().forEach(m=>{(byDay[m.date]=byDay[m.date]||[]).push(m)});
     const map=new Map();
     const add=(m,o,r,isFirst)=>{if(!map.has(m.id))map.set(m.id,[]);map.get(m.id).push(Object.assign({o,isFirst},r))};
     Object.values(byDay).forEach(l=>{
@@ -778,7 +787,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   function renderHead(cm){
     document.getElementById('monthname').textContent=`${cap(fmtMonth.format(new Date(view.y,view.m,1)))} ${view.y}`;
     const prefix=`${view.y}-${pad(view.m+1)}-`;
-    const mm=matches.filter(m=>m.date.startsWith(prefix));
+    const mm=inView().filter(m=>m.date.startsWith(prefix));
     const loc=mm.filter(m=>m.side==='L').length, vis=mm.length-loc;
     const bad=mm.filter(m=>status(m,cm)==='bad').length;
     const warn=mm.filter(m=>status(m,cm)==='warn').length;
@@ -812,7 +821,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     const first=new Date(view.y,view.m,1);
     const offset=(first.getDay()+6)%7;
     const start=new Date(view.y,view.m,1-offset);
-    const byDay={};matches.forEach(m=>{(byDay[m.date]=byDay[m.date]||[]).push(m)});
+    const byDay={};inView().forEach(m=>{(byDay[m.date]=byDay[m.date]||[]).push(m)});
     let html='';
     for(let i=0;i<42;i++){
       const dt=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
@@ -871,7 +880,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
 
   function renderDay(cm){
     const dt=fromKey(selected);
-    const list=matches.filter(m=>m.date===selected).sort(byStart);
+    const list=inView().filter(m=>m.date===selected).sort(byStart);
     const timed=list.filter(m=>!m.noTime);
     const nL=list.filter(m=>m.side==='L').length,nV=list.length-nL;
     const nU=list.filter(m=>m.confirmed===false&&!m.done).length;
@@ -1680,6 +1689,10 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
     matches.forEach(m=>{if(m.date===dk&&m.confirmed===false&&!m.noTime&&!m.done){m.confirmed=true;delete m.prev;}});
     save();render();
   }
+
+  function syncFilter(){document.querySelectorAll('.clubfilter [data-f]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.f===cfg.filter)));}
+  document.querySelector('.clubfilter').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;cfg.filter=b.dataset.f;saveCfg();syncFilter();render();});
+  syncFilter();
 
   /* ---------- eventos ---------- */
   document.addEventListener('click',e=>{

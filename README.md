@@ -19,7 +19,7 @@ Funciona sin conexión y guarda los datos en el propio móvil.
 ## Actualizar la app
 
 Cuando cambies `index.html`, sube también `sw.js` con el número de versión subido
-(`partidos-v8` > `partidos-v9`) para que los móviles recojan la actualización.
+(`partidos-v9` > `partidos-v10`) para que los móviles recojan la actualización.
 
 ## Importante
 
@@ -81,3 +81,8 @@ Si borras los datos del navegador, se pierden.
   ni trayectos hasta que les pongas hora («Poner hora»).
 - Si se vuelve a importar y iSquad cambia una fecha u hora, el partido vuelve a «sin confirmar» y muestra el horario anterior.
 - En «Trayectos > Ajustes» hay una opción para avisar de superposiciones solo cuando coincide el entrenador.
+
+## Filtro por club
+
+Sobre el calendario hay tres botones: **Todos**, **Sant Celoni** y **Arenys de Mar**. El filtro cambia el calendario, los contadores, el detalle del día y los avisos. La elección se recuerda.
+Las superposiciones y trayectos se avisan solo cuando coincide el entrenador (se puede cambiar en Trayectos > Ajustes).
