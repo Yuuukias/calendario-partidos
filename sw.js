@@ -1,5 +1,5 @@
 // Sube el número de versión cada vez que cambies la app para que los móviles se actualicen.
-const CACHE = 'partidos-v9';
+const CACHE = 'partidos-v11';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

@@ -19,7 +19,7 @@ Funciona sin conexión y guarda los datos en el propio móvil.
 ## Actualizar la app
 
 Cuando cambies `index.html`, sube también `sw.js` con el número de versión subido
-(`partidos-v9` > `partidos-v10`) para que los móviles recojan la actualización.
+(`partidos-v10` > `partidos-v11`) para que los móviles recojan la actualización.
 
 ## Importante
 
@@ -86,3 +86,13 @@ Si borras los datos del navegador, se pierden.
 
 Sobre el calendario hay tres botones: **Todos**, **Sant Celoni** y **Arenys de Mar**. El filtro cambia el calendario, los contadores, el detalle del día y los avisos. La elección se recuerda.
 Las superposiciones y trayectos se avisan solo cuando coincide el entrenador (se puede cambiar en Trayectos > Ajustes).
+
+## Editar en el ordenador, ver en el móvil
+
+- En **ordenador** se edita todo (los datos se guardan en ese navegador).
+- En **móvil y tableta** la app es **solo lectura**.
+- Para enviar el calendario al móvil: en el ordenador pulsa **Compartir**, copia el enlace y envíatelo (WhatsApp, correo…).
+  Al abrirlo en el móvil, la app guarda esos datos y los muestra. Cuando cambies algo, envía un enlace nuevo.
+  Alternativa: «Descargar como archivo» y, en el móvil, «Cargar archivo». No hace falta GitHub.
+- Para editar desde un móvil excepcionalmente, añade `?editar=1` a la dirección.
+- Las superposiciones y trayectos solo se avisan si los dos partidos tienen el mismo entrenador.
