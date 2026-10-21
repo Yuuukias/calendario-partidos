@@ -280,7 +280,7 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
   .dtitle{font-size:26px}
 }
 @media (min-width:1500px){.app{max-width:1440px}}
-.dlist{display:none;flex-direction:column;gap:9px;margin-top:12px}
+.dlist{display:flex;flex-direction:column;gap:9px;margin-top:12px}
 .dcard{--bd:var(--gr-d);--bl:var(--gr-l);display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--bd);border-left-width:8px;border-radius:10px;padding:9px 11px;background:var(--surface2);font-size:14px;line-height:1.3}
 .dcard.sc{--bd:var(--sc-d);--bl:var(--sc-l)} .dcard.am{--bd:var(--ar-d);--bl:var(--ar-l)}
 .dcard.bad{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ov-fill)}
@@ -960,6 +960,10 @@ body.ro .app{padding-bottom:24px}
       if(m.done)notes.push('Jugado'+(m.result?`: ${m.result}`:''));
       if(m.prev)notes.push('Antes: '+m.prev);
       else if(m.isq&&!m.fed&&!m.done)notes.push('Fecha provisional en iSquad');
+      let shift='';
+      if(m.isq&&!m.fed&&!m.done){const wd=fromKey(m.date).getDay();
+        if(wd===0)shift=`<button type="button" class="btn mini" data-shift="${m.id}|-1">Mover al sábado</button> `;
+        else if(wd===6)shift=`<button type="button" class="btn mini" data-shift="${m.id}|1">Mover al domingo</button> `;}
       return `<div class="dcard ${st} ${clubCls(m)} ${local?'local':'away'}${unc||m.noTime?' unc':''}${m.done?' done':''}" data-edit="${m.id}" role="button" tabindex="0">`+
         `<span class="tag">${local?'L':'V'}</span><span class="dc"><b>${when} ${esc(m.rival)}</b>`+
         `<span>${esc(l2)}</span>`+
@@ -967,7 +971,7 @@ body.ro .app{padding-bottom:24px}
         (place?`<span>Lugar: ${esc(place)}</span>`:(m.isq?'<span>Lugar: sin asignar todavía</span>':''))+
         (cross?`<span class="dx">${esc(cross)}</span>`:'')+
         (notes.length?`<span class="dn2">${esc(notes.join(' · '))}</span>`:'')+
-        (unc?`<span class="dact"><button type="button" class="btn mini" data-confirm="${m.id}">${m.noTime?'Poner hora':'Confirmar horario'}</button></span>`:'')+
+        ((unc||shift)?`<span class="dact">${shift}${unc?`<button type="button" class="btn mini" data-confirm="${m.id}">${m.noTime?'Poner hora':'Confirmar horario'}</button>`:''}</span>`:'')+
         `</span></div>`;
     }).join('')+`</div>`;
 
@@ -1801,6 +1805,9 @@ body.ro .app{padding-bottom:24px}
   /* ---------- eventos ---------- */
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-close-day]')||e.target.id==='sheetbd'){closeSheet();return;}
+    const sh=e.target.closest('[data-shift]');
+    if(sh){e.stopPropagation();const [id,n]=sh.dataset.shift.split('|');const m=matches.find(x=>x.id===id);
+      if(m){const d=fromKey(m.date);d.setDate(d.getDate()+Number(n));m.date=keyOf(d);selected=m.date;view={y:d.getFullYear(),m:d.getMonth()};save();render();}return;}
     const cf=e.target.closest('[data-confirm]');
     if(cf){e.stopPropagation();confirmMatch(cf.dataset.confirm);return;}
     const cd=e.target.closest('[data-confirm-day]');
