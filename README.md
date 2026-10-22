@@ -96,3 +96,9 @@ Las superposiciones y trayectos se avisan solo cuando coincide el entrenador (se
   Alternativa: «Descargar como archivo» y, en el móvil, «Cargar archivo». No hace falta GitHub.
 - Para editar desde un móvil excepcionalmente, añade `?editar=1` a la dirección.
 - Las superposiciones y trayectos solo se avisan si los dos partidos tienen el mismo entrenador.
+
+## Calendarios escolares
+
+El botón **iSquad** también incluye los equipos escolares (Consell Esportiu del Vallès Oriental): Infantil mixt y Aleví mixt, leídos de los PDF del Consell. Entran igual que los de la federación: sin confirmar y con «Hora por confirmar» donde el PDF dice «sense hora». Los datos están en el bloque `isq-data` del final de `index.html`.
+
+También está el **Cadet-Juvenil masculí** de los Jocs Esportius Escolars del Maresme (CV Sant Celoni «A»), leído del PDF del Consell Esportiu del Maresme.
