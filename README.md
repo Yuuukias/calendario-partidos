@@ -114,3 +114,7 @@ En **iSquad > Actualizar desde iSquad** la app puede volver a leer las páginas 
 ## Actualización de datos (26/10/2026)
 
 Esta versión trae datos de iSquad releídos el 26/10/2026 para 6 categorías. Al abrir la app en el ordenador, **se aplican solos** los cambios (resultados, horas y fechas nuevas) a los partidos que ya tengas importados; los que cambian de fecha u hora vuelven a «sin confirmar» y muestran el horario anterior. En el diálogo de iSquad cada categoría indica la fecha de su última lectura.
+
+## Actualización automática
+
+Si hay un lector configurado (carpeta `lector-isquad`, instrucciones en `LEEME.md`), la app en el ordenador se actualiza sola al abrirla, como máximo una vez cada 20 horas. Sin lector, se usa la carga manual.
