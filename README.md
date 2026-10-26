@@ -102,3 +102,15 @@ Las superposiciones y trayectos se avisan solo cuando coincide el entrenador (se
 El botón **iSquad** también incluye los equipos escolares (Consell Esportiu del Vallès Oriental): Infantil mixt y Aleví mixt, leídos de los PDF del Consell. Entran igual que los de la federación: sin confirmar y con «Hora por confirmar» donde el PDF dice «sense hora». Los datos están en el bloque `isq-data` del final de `index.html`.
 
 También está el **Cadet-Juvenil masculí** de los Jocs Esportius Escolars del Maresme (CV Sant Celoni «A»), leído del PDF del Consell Esportiu del Maresme.
+
+## Actualizar horarios
+
+Los datos de iSquad y de los PDF escolares van dentro de la app, así que no se actualizan solos. Cuando haya horarios nuevos, se prepara un **archivo de actualización** (`actualizacion.json`). En la app: botón **iSquad > Cargar actualización**, y luego **Añadir al calendario**. Los partidos cuyo horario ha cambiado vuelven a «sin confirmar» y muestran el horario anterior. No hace falta volver a subir la app.
+
+## Actualizar desde iSquad (botón)
+
+En **iSquad > Actualizar desde iSquad** la app puede volver a leer las páginas de la federación y aplicar los cambios. Necesita el **lector** (un Cloudflare Worker, carpeta `lector-isquad`, que NO va en este zip): pega su dirección en el diálogo. Sin lector, sigue funcionando «Cargar actualización» con un archivo.
+
+## Actualización de datos (26/10/2026)
+
+Esta versión trae datos de iSquad releídos el 26/10/2026 para 6 categorías. Al abrir la app en el ordenador, **se aplican solos** los cambios (resultados, horas y fechas nuevas) a los partidos que ya tengas importados; los que cambian de fecha u hora vuelven a «sin confirmar» y muestran el horario anterior. En el diálogo de iSquad cada categoría indica la fecha de su última lectura.
