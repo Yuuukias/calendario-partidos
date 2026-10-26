@@ -1739,9 +1739,9 @@ body.ro .app{padding-bottom:24px}
     isqRoutes(quiet&&!(add||upd||rec)?'':summary);
   }
   const WKEY='partidos-isq-worker';
-  document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
+  document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const ISQ_WORKER='';
+  const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/');const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
     const got=[],fail=[];
