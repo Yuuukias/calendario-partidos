@@ -118,3 +118,15 @@ Esta versión trae datos de iSquad releídos el 26/10/2026 para 6 categorías. A
 ## Actualización automática
 
 Si hay un lector configurado (carpeta `lector-isquad`, instrucciones en `LEEME.md`), la app en el ordenador se actualiza sola al abrirla, como máximo una vez cada 20 horas. Sin lector, se usa la carga manual.
+
+## Mismo entrenador con nombres distintos
+
+Las superposiciones y trayectos se avisan cuando es el mismo entrenador aunque el nombre esté escrito distinto: «Santi» = «Santiago Sancer Navarro», «Juanma» = «Juan Manuel Arguelles», o el mismo nombre con y sin segundo apellido. Si un apodo puede ser de dos personas, no se une. Para el resto, en **Trayectos > Ajustes** hay una caja «Entrenadores con varios nombres» (una línea por persona: `Nombre1 = Nombre2`).
+
+## Horarios escolares (PDF)
+
+En **iSquad > Horarios escolares (PDF)** se puede elegir el PDF del calendario del Consell Esportiu (Vallès Oriental o Maresme; se pueden elegir varios a la vez). La app coge solo los partidos de Sant Celoni y los fusiona con los que ya hay: no duplica, y si una fecha u hora cambia el partido vuelve a «sin confirmar» y muestra el anterior. Si el PDF trae una fecha claramente errónea (por ejemplo un año equivocado), la corrige y lo avisa en una nota del partido. Para categorías nuevas basta con cargar su PDF.
+
+## CEVO automático
+
+Si el lector está actualizado (nuevo `worker.js`), la actualización automática también trae los calendarios escolares del CEVO (Infantil y Aleví mixt) desde su PDF de exportación. El Maresme sigue siendo manual (PDF).

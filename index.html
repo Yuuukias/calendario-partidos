@@ -479,11 +479,17 @@ body.ro .app{padding-bottom:24px}
     <p class="hint">Los partidos entran como <b>horario sin confirmar</b>: cuando lo confirmes (con el club rival o la federación), pulsa «Confirmar horario». Si vuelves a importar y iSquad cambia una fecha u hora, el partido vuelve a quedar sin confirmar y te muestra el horario anterior.</p>
     <div class="box">
       <b>Actualizar desde iSquad</b>
-      <p class="hint">Vuelve a leer las páginas de la federación y aplica los cambios de fecha, hora y resultados. Los equipos escolares (PDF) no se actualizan así.</p>
+      <p class="hint">Vuelve a leer las páginas de la federación (iSquad) y los calendarios escolares del CEVO (Infantil y Aleví) y aplica los cambios de fecha, hora y resultados. El Cadet-Juvenil del Maresme se actualiza cargando su PDF.</p>
       <label class="fld">Dirección del lector (Cloudflare)
         <input type="url" id="qworker" placeholder="https://lector-isquad.tu-usuario.workers.dev" inputmode="url" autocomplete="off"></label>
       <div class="actions"><span class="sp"></span><button type="button" class="btn primary" id="qrefresh">Actualizar desde iSquad</button></div>
       <div class="fmsg" id="qrmsg" aria-live="polite"></div>
+    </div>
+    <div class="box">
+      <b>Horarios escolares (PDF)</b>
+      <p class="hint">Elige el PDF del calendario del Consell Esportiu (Vallès Oriental o Maresme). Se cogen solo los partidos de Sant Celoni y se fusionan con los que ya tienes: si cambia una fecha u hora, el partido vuelve a «sin confirmar» y muestra el anterior.</p>
+      <label class="btn" style="cursor:pointer">Elegir PDF(s)<input type="file" id="qpdf" accept=".pdf,application/pdf" multiple hidden></label>
+      <div class="fmsg" id="qpmsg" aria-live="polite"></div>
     </div>
     <p class="hint" id="qupdinfo"></p>
     <div class="fmsg" id="qmsg" aria-live="polite"></div>
@@ -519,7 +525,9 @@ body.ro .app{padding-bottom:24px}
         <label class="fld">Margen extra (min)<input type="number" name="buffer" min="0" max="120" step="5" inputmode="numeric"></label>
         <label class="fld">Si no se conoce (min)<input type="number" name="def" min="0" max="300" step="5" inputmode="numeric"></label>
       </div>
-      <p class="hint">Los avisos de superposición y de trayecto solo salen cuando los dos partidos tienen el mismo entrenador. Un partido sin entrenador no genera avisos.</p>
+      <p class="hint">Los avisos de superposición y de trayecto solo salen cuando los dos partidos tienen el mismo entrenador. Un partido sin entrenador no genera avisos. La app reconoce solo variantes evidentes («Santi» y «Santiago Sancer Navarro», o el nombre sin el segundo apellido).</p>
+      <label class="fld">Entrenadores con varios nombres <small>(uno por línea, separados por =)</small>
+        <textarea name="coachAliases" rows="3" placeholder="Ej.&#10;Santi = Santiago Sancer Navarro&#10;Juanma = Juan Manuel Arguelles" style="width:100%"></textarea></label>
     </div>
 
     <div class="box">
@@ -623,7 +631,7 @@ body.ro .app{padding-bottom:24px}
       const r=localStorage.getItem(TSTORE);
       if(r){
         const c=JSON.parse(r);
-        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachOnly:c.coachOnly===undefined?true:!!c.coachOnly,filter:['SC','AM'].includes(c.filter)?c.filter:'ALL'};
+        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachAliases:typeof c.coachAliases==='string'?c.coachAliases:'',coachOnly:c.coachOnly===undefined?true:!!c.coachOnly,filter:['SC','AM'].includes(c.filter)?c.filter:'ALL'};
       }
     }catch(e){}
     return null;
@@ -665,7 +673,7 @@ body.ro .app{padding-bottom:24px}
   if(!RO&&!Array.isArray(matches)){matches=seed();save();seeded=true;}
   if(RO)document.body.classList.add('ro');
   let cfg=loadCfg();
-  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachOnly:true,filter:'ALL'};saveCfg();}
+  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachAliases:'',coachOnly:true,filter:'ALL'};saveCfg();}
   let geo=loadGeo();
 
   const now=new Date();
@@ -687,8 +695,48 @@ body.ro .app{padding-bottom:24px}
   }
   // Compara cualquier pareja de partidos del mismo día.
   // Devuelve null, {kind:'overlap'} o {kind:'travel',gap,need,est,first,second}
+  /* ---------- mismo entrenador aunque el nombre esté escrito distinto ---------- */
+  const NICK={santi:['santiago'],juanma:['juan','manuel'],juanmi:['juan','miguel'],juanjo:['juan','jose'],manu:['manuel'],pepe:['jose'],paco:['francisco'],fran:['francisco'],javi:['javier'],nacho:['ignacio'],rafa:['rafael'],toni:['antonio'],quim:['joaquin'],dani:['daniel'],edu:['eduardo'],fer:['fernando'],jesu:['jesus'],xavi:['javier'],kiko:['francisco'],migue:['miguel'],alex:['alejandro'],pablito:['pablo'],lolo:['manuel'],nando:['fernando'],carlitos:['carlos'],richi:['ricardo'],rober:['roberto'],txema:['jose','maria'],chema:['jose','maria']};
+  const EQV={antoni:'antonio',josep:'jose',xavier:'javier',joaquim:'joaquin',francesc:'francisco',miquel:'miguel',joan:'juan',pere:'pedro',jaume:'jaime',lluis:'luis',jordi:'jorge',ignasi:'ignacio',tomas:'tomas',pau:'pablo',gerard:'gerardo',albert:'alberto',enric:'enrique',ramon:'ramon',eric:'eric'};
+  const plain=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+  function ctokens(name){
+    const t=plain(name).split(' ').filter(Boolean);if(!t.length)return t;
+    const f=t[0];const rest=t.slice(1);
+    if(NICK[f])return NICK[f].concat(rest);
+    return [EQV[f]||f].concat(rest);
+  }
+  let cgSig='',cgMap=null;
+  function coachGroups(extra){
+    const names=new Set();matches.forEach(m=>{if(m.coach)names.add(m.coach)});(extra||[]).forEach(n=>{if(n)names.add(n)});
+    const sig=[...names].sort().join('|')+'##'+(cfg.coachAliases||'');
+    if(cgMap&&sig===cgSig)return cgMap;
+    const par=new Map();const find=x=>{if(!par.has(x))par.set(x,x);while(par.get(x)!==x){par.set(x,par.get(par.get(x)));x=par.get(x);}return x;};
+    const uni=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)par.set(ra,rb);};
+    const list=[...names].map(n=>({n,k:plain(n),t:ctokens(n)})).filter(x=>x.t.length);
+    list.forEach(x=>find(x.k));
+    const isPrefix=(a,b)=>a.length<=b.length&&a.every((v,i)=>v===b[i]);
+    for(let i=0;i<list.length;i++)for(let j=0;j<list.length;j++){
+      if(i===j)continue;const A=list[i],B=list[j];
+      if(A.t.length===B.t.length&&A.t.every((v,k)=>v===B.t[k])){uni(A.k,B.k);continue;}   // «Juanma» = «Juan Manuel», «Santi» = «Santiago»
+      if(A.t.length>=B.t.length)continue;               // A es la versión corta
+      if(!isPrefix(A.t,B.t))continue;
+      if(A.t.length>=2){uni(A.k,B.k);continue;}          // «Juan Manuel Arguelles» y «Juan Manuel Arguelles Velez»
+      const longs=list.filter(y=>y.t.length>=2&&y.t[0]===A.t[0]);   // «Santi» solo si hay un único «Santiago …»
+      if(longs.length===1)uni(A.k,B.k);
+    }
+    (cfg.coachAliases||'').split(/\n/).forEach(line=>{
+      const ns=line.split('=').map(x=>plain(x)).filter(Boolean);
+      for(let i=1;i<ns.length;i++)uni(ns[0],ns[i]);
+    });
+    cgSig=sig;cgMap={find,plain};return cgMap;
+  }
+  function sameCoach(a,b){
+    if(!a||!b)return false;
+    const g=coachGroups([a,b]);const pa=g.plain(a),pb=g.plain(b);
+    return pa===pb||g.find(pa)===g.find(pb);
+  }
   function evalPair(a,b){
-    if(!(a.coach&&b.coach&&a.coach===b.coach))return null; // sin entrenador, o entrenadores distintos: no hay conflicto
+    if(!sameCoach(a.coach,b.coach))return null; // sin entrenador, o entrenadores distintos: no hay conflicto
     if(overlaps(a,b))return {kind:'overlap'};
     const first=span(a)[0]<=span(b)[0]?a:b, second=first===a?b:a;
     const gap=span(second)[0]-span(first)[1];
@@ -719,7 +767,7 @@ body.ro .app{padding-bottom:24px}
     const e=cm.get(m.id);if(!e||!e.length)return '';
     const ov=e.filter(x=>x.kind==='overlap');
     if(ov.length){
-      const same=ov.some(x=>m.coach&&x.o.coach===m.coach);
+      const same=ov.some(x=>sameCoach(m.coach,x.o.coach));
       return 'Se cruza con '+ov[0].o.rival+(ov.length>1?` y ${ov.length-1} más`:'')+(same?' (mismo entrenador)':'');
     }
     const t=e[0],late=t.need-t.gap;
@@ -944,7 +992,7 @@ body.ro .app{padding-bottom:24px}
     if(ovPairs.length){
       const d=m=>{const [s,e]=span(m);return `${clubTag(m)}${esc(m.rival)} (${fmt(s)}–${fmt(e)})`};
       html+=`<div class="alert"><b>${ALERT}${ovPairs.length===1?'Hay 1 superposición':`Hay ${ovPairs.length} superposiciones`}</b><ul>`+
-        ovPairs.map(([a,b])=>`<li>${d(a)} y ${d(b)}${a.coach&&a.coach===b.coach?' — mismo entrenador ('+esc(a.coach)+')':''}</li>`).join('')+`</ul></div>`;
+        ovPairs.map(([a,b])=>`<li>${d(a)} y ${d(b)}${sameCoach(a.coach,b.coach)?' — mismo entrenador ('+esc(a.coach)+(a.coach!==b.coach?' / '+esc(b.coach):'')+')':''}</li>`).join('')+`</ul></div>`;
     }
     if(trPairs.length){
       html+=`<div class="alert warn"><b>${ALERT}${trPairs.length===1?'1 trayecto sin tiempo suficiente':`${trPairs.length} trayectos sin tiempo suficiente`}</b><ul>`+
@@ -1047,7 +1095,7 @@ body.ro .app{padding-bottom:24px}
     const parts=[];
     if(ov.length){
       parts.push('Se superpone con: '+ov.map(m=>{const [s,e]=span(m);return `${m.rival} (${fmt(s)}–${fmt(e)})`}).join(', ')+'.'+
-        (c.coach&&ov.some(m=>m.coach===c.coach)?' '+c.coach+' tendría dos partidos a la vez.':''));
+        (c.coach&&ov.some(m=>sameCoach(m.coach,c.coach))?' '+c.coach+' tendría dos partidos a la vez.':''));
     }
     tr.forEach(r=>parts.push(`Trayecto insuficiente entre ${r.first.rival} y ${r.second.rival}: hacen falta ${r.need} min${r.est?' (estimado)':''} y hay ${r.gap}.`));
     if(parts.length){fmsg.className='fmsg '+(ov.length?'bad':'warn');fmsg.textContent=parts.join(' ');}
@@ -1131,6 +1179,7 @@ body.ro .app{padding-bottom:24px}
     cfg.def=Number.isFinite(d)&&d>=0?Math.min(d,300):30;
     cfg.buffer=Number.isFinite(b)&&b>=0?Math.min(b,120):10;
     cfg.area=tf.area.value.trim();
+    cfg.coachAliases=tf.coachAliases.value;
     saveCfg();
   }
   function sameDayPairs(){
@@ -1164,7 +1213,7 @@ body.ro .app{padding-bottom:24px}
     document.getElementById('pairs').innerHTML=html;
   }
   function openTravel(){
-    tf.def.value=cfg.def;tf.buffer.value=cfg.buffer;tf.area.value=cfg.area;
+    tf.def.value=cfg.def;tf.buffer.value=cfg.buffer;tf.area.value=cfg.area;tf.coachAliases.value=cfg.coachAliases||'';
     tf.torig.value='';tf.tdest.value='';tres.hidden=true;
     renderPairs();
     if(typeof tdlg.showModal==='function')tdlg.showModal();else tdlg.setAttribute('open','');
@@ -1745,12 +1794,19 @@ body.ro .app{padding-bottom:24px}
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/');const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
     const got=[],fail=[];
+    const cids=Array.isArray(d0.cevo)?d0.cevo:[];             // calendarios escolares del CEVO (PDF), si el lector los trae
+    const total=ids.length+cids.length;
     for(let i=0;i<ids.length;i++){
-      if(progress)progress(i+1,ids.length);
+      if(progress)progress(i+1,total);
       try{const r=await fetch(`${url}/?team=${ids[i]}`);const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
       catch(e){fail.push(ids[i]);}
     }
-    return {ids,got,fail};
+    for(let i=0;i<cids.length;i++){
+      if(progress)progress(ids.length+i+1,total);
+      try{const r=await fetch(`${url}/?cevo=${cids[i]}`);if(!r.ok)throw new Error('http');const t=await escFromBlob(await r.blob());if(!t)throw new Error('sin partidos');got.push(t);}
+      catch(e){fail.push('cevo-'+cids[i]);}
+    }
+    return {ids:ids.concat(cids),got,fail};
   }
   function storeUpdate(got){
     let u=null;try{u=JSON.parse(localStorage.getItem(UPDKEY)||'null');}catch(e){}
@@ -1774,10 +1830,191 @@ body.ro .app{padding-bottom:24px}
     runIsq(gid);
     if(res.fail.length)say(`No se pudieron leer ${res.fail.length} de ${res.ids.length} categorías; se han conservado sus datos anteriores.`,'bad',10000);
   };
+  /* ---------- horarios escolares: PDF del Consell Esportiu (Vallès Oriental y Maresme) ---------- */
+  const ESC_LABEL={9001:'Infantil mixt · Consell Esportiu Vallès Oriental',9002:'Aleví mixt · Consell Esportiu Vallès Oriental',9003:'Cadet-Juvenil masculí · 1a fase · Jocs Esportius del Maresme'};
+  const ESC_KEYS={'valles:infantil mixte':9001,'valles:alevi mixte':9002,'maresme:cadet-juvenil':9003};
+  const ACRO=new Set(['CV','AEE','IES','JUV','AEC','EIE','EMT','CE','FP','CN','AVA','UD','CD','CF','AE']);
+  function tidyName(n){
+    n=String(n||'').replace(/\s+/g,' ').trim();
+    if(n!==n.toUpperCase())return n;                       // ya viene con minúsculas: se respeta
+    return n.split(' ').map((w,i)=>{
+      const m=w.match(/^(["“(]*)([^"”)]*)(["”)]*)$/),core=m?m[2]:w;
+      if(core==='ST')return m?m[1]+'St.'+m[3]:'St.';
+      if(ACRO.has(core)||/^\d|^[A-Z]$/.test(core))return w;
+      const low=core.toLowerCase();
+      const t=(i>0&&['de','del','la','les','el','i','a'].includes(low))?low:low.replace(/^(\p{L})/u,c=>c.toUpperCase());
+      return m?m[1]+t+m[3]:t;
+    }).join(' ');
+  }
+  const SOTV={v:'Pavelló Sot de les Granotes',c:'',la:41.68170569999999,lo:2.4827973};
+  function escVenue(raw){
+    const t=nk(raw).replace(/\s+/g,' ');
+    const V=(v,c,la,lo)=>({v,c:c||'',la:la??null,lo:lo??null});
+    if(!t||/a designar/.test(t))return V('');
+    if(/sot de les granotes|st celoni-pav sot/.test(t))return Object.assign({},SOTV);
+    if(/can bassa/.test(t))return V('Pavelló Poliesportiu de Can Bassa',/int\.?\s*$/.test(t)?'Int.':/ext\.?\s*$/.test(t)?'Ext.':'',41.5925989,2.2889676);
+    if(/granollers.*\btub\b/.test(t))return V('Pavelló Municipal de Granollers','Tub');
+    if(/escola municipal.*treball/.test(t))return V('Escola Municipal del Treball (Granollers)');
+    if(/^llinars/.test(t))return V('Pavelló Municipal de Llinars','',41.6408301,2.3999087);
+    if(/^se-|polisportiva cob/.test(t))return V('Pista Polisportiva Cob (Sant Esteve de Palautordera)',/annexe/.test(t)?'Annexe':'');
+    if(/^cardedeu/.test(t))return V('Pavelló Municipal de Cardedeu');
+    if(/llagosta/.test(t))return V('CEM Turó (La Llagosta)');
+    if(/^taradell/.test(t))return V("Pavelló Municipal d'Esports de Taradell");
+    if(/^torello/.test(t))return V("Pavelló Municipal d'Esports de Torelló");
+    if(/^st fost/.test(t))return V('Pavelló Municipal de Sant Fost (n.º 1)');
+    if(/euskadi/.test(t))return V('Poliesportiu Carrer Euskadi','',41.544383,2.4289263);
+    if(/silvia dominguez/.test(t))return V('Poliesportiu Municipal Sílvia Domínguez (Montgat)');
+    if(/santa anna/.test(t))return V('Escola Pia Santa Anna (Edifici de Mar)');
+    if(/thos i codina/.test(t))return V('Institut Thos i Codina');
+    if(/mediterr/.test(t))return V('Institut Mediterrània (El Masnou)');
+    if(/valldemia/.test(t))return V('Escola Valldemia (Poliesportiu)');
+    if(/hamelin/.test(t))return V('Hamelin-Laie International School');
+    return V(tidyName(raw));
+  }
+  async function pdfPages(file){
+    const pdfjs=await getPDFJS();const pdf=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise;const pages=[];
+    for(let n=1;n<=pdf.numPages;n++){
+      const tc=await (await pdf.getPage(n)).getTextContent();
+      pages.push(tc.items.map(i=>({x:Math.round(i.transform[4]),y:Math.round(i.transform[5]),s:i.str.replace(/\s+/g,' ').trim()})).filter(i=>i.s));
+    }
+    return pages;
+  }
+  const isoFrom=(d,m,y)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const isSC=n=>/sant celoni/.test(nk(n));
+  function parseMaresme(pages){
+    const all=[];pages.forEach((it,pi)=>it.forEach(i=>all.push(Object.assign({pg:pi},i))));
+    all.sort((a,b)=>a.pg-b.pg||b.y-a.y||a.x-b.x);
+    let cat='',jor=0;const rows=[];
+    const head=all.find(i=>/^Lliga Comarcal/i.test(i.s));
+    if(head)cat=head.s.replace(/^Lliga Comarcal\s+VOLEIBOL\s*/i,'').replace(/\.?\s*\d+a Fase\s*$/i,'').trim();
+    all.forEach((i,idx)=>{
+      const mj=i.s.match(/^Jornada\s+(\d+)$/i);if(mj){jor=Number(mj[1]);return;}
+      if(!(i.x<30&&/^\d{3,5}$/.test(i.s)))return;                        // CODI
+      const line=all.filter(o=>o.pg===i.pg&&Math.abs(o.y-i.y)<=2);
+      const get=(a,b)=>line.filter(o=>o.x>=a&&o.x<b).map(o=>o.s).join(' ').trim();
+      const local=get(30,150),vis=get(150,370),dia=get(370,415),hora=get(415,445);
+      let ven=get(445,999);
+      const sub=all.filter(o=>o.pg===i.pg&&o.x>=445&&o.y<i.y-1&&o.y>=i.y-11&&!/^\d{3,5}$/.test(o.s)&&!all.some(q=>q.pg===o.pg&&q.x<30&&/^\d{3,5}$/.test(q.s)&&Math.abs(q.y-o.y)<=2));
+      const court=sub.map(o=>o.s).join(' ').trim();
+      rows.push({j:jor,local,vis,dia,hora,ven,court});
+    });
+    return {cat,rows};
+  }
+  function parseValles(pages){
+    const all=[];pages.forEach((it,pi)=>it.forEach(i=>all.push(Object.assign({pg:pi},i))));
+    all.sort((a,b)=>a.pg-b.pg||b.y-a.y||a.x-b.x);
+    const val=lab=>{const h=all.find(i=>i.s===lab);if(!h)return '';const o=all.find(i=>i.pg===h.pg&&Math.abs(i.y-h.y)<=2&&i.x>h.x+20);return o?o.s:'';};
+    const cat=val('Categoria:'),grup=val('Grup:');
+    const hd=all.filter(i=>i.pg===0&&['Data','Local','Visitant','Pista','Hora'].includes(i.s));
+    const X=n=>(hd.find(i=>i.s===n)||{}).x;
+    const cD=X('Data')??87,cV=X('Visitant')??271,cP=X('Pista')??403,cH=X('Hora')??537;
+    // filas: elementos que empiezan por una fecha en la columna de fecha
+    const mains=all.filter(i=>Math.abs(i.x-cD)<=8&&/^\d{2}\/\d{2}\/\d{4}\b/.test(i.s));
+    const jors=all.filter(i=>i.x<cD-10&&/^\d{1,2}$/.test(i.s));
+    const rows=mains.map(m=>({m,items:[],j:0}));
+    all.forEach(i=>{
+      if(rows.some(r=>r.m===i)||jors.includes(i))return;
+      if(i.y>all.find(o=>o.s==='JORNADES'&&o.pg===0).y&&i.pg===0)return;            // cabecera del documento
+      let best=null,bd=1e9;rows.forEach(r=>{if(r.m.pg!==i.pg)return;const d=Math.abs(r.m.y-i.y);if(d<bd){bd=d;best=r;}});
+      if(best&&bd<=12)best.items.push(i);
+    });
+    rows.forEach(r=>{let j=0;jors.forEach(o=>{if(o.pg<r.m.pg||(o.pg===r.m.pg&&o.y>=r.m.y-2))j=Number(o.s);});r.j=j;});
+    // nombres de equipo conocidos (de las filas limpias)
+    const known=new Set(['REPOSA']);
+    rows.forEach(r=>{
+      const vis=r.items.filter(i=>i.x>=cV-5&&i.x<cP-5);
+      const rest=r.m.s.replace(/^\d{2}\/\d{2}\/\d{4}\s*/,'');
+      if(vis.length===1&&!/^[A-ZÀ-Ü .]+-/.test(vis[0].s)){known.add(rest);known.add(vis[0].s);}
+    });
+    const kn=[...known].sort((a,b)=>b.length-a.length);
+    const out=[];
+    rows.forEach(r=>{
+      const dm=r.m.s.match(/^(\d{2})\/(\d{2})\/(\d{4})\s*(.*)$/);
+      let local=dm[4],vis='',venue=[];
+      const vItems=r.items.filter(i=>i.x>=cV-5&&i.x<cP-5).sort((a,b)=>b.y-a.y||a.x-b.x);
+      const pItems=r.items.filter(i=>i.x>=cP-5&&i.x<cH-10).sort((a,b)=>b.y-a.y);
+      const hItems=r.items.filter(i=>i.x>=cH-10).sort((a,b)=>b.y-a.y);
+      let visTxt=vItems.map(i=>i.s).join(' ');
+      const kv=visTxt?kn.find(n=>visTxt.startsWith(n)):null;
+      if(kv){                                                          // visitante (y a veces la pista pegada)
+        vis=kv;const rem=visTxt.slice(kv.length).trim();if(rem)venue.push(rem);
+      }else if(!visTxt||/^[A-ZÀ-Ü .]+-/.test(visTxt)){                  // local y visitante pegados
+        const k=kn.find(n=>local.startsWith(n)&&local.length>n.length);
+        if(k){vis=local.slice(k.length).trim();local=k;}
+        if(visTxt)venue.push(visTxt);
+      }else vis=visTxt;
+      pItems.forEach(i=>venue.push(i.s));
+      let horaTxt=hItems.map(i=>i.s).join(' '),venTxt=venue.join(' ');
+      const hv=venTxt.match(/\s(\d{1,2}:\d{2})\s*$/);                  // «…Sot Granotes 09:30» en el mismo texto
+      if(hv){if(!/\d{1,2}:\d{2}/.test(horaTxt)||horaTxt.indexOf('00:00')>=0)horaTxt=hv[1];venTxt=venTxt.slice(0,hv.index);}
+      venTxt=venTxt.replace(/\s*\bsense\b(\s+hora)?\s*$/i,'').replace(/\s*\bhora\s*$/i,'').trim();
+      const hm=horaTxt.match(/\d{1,2}:\d{2}/);
+      out.push({j:r.j,local,vis,dia:`${dm[1]}-${dm[2]}-${dm[3]}`,hora:hm?hm[0]:'',ven:venTxt,court:''});
+    });
+    return {cat,grup,rows:out};
+  }
+  function escTeams(parsed,kind){
+    const key=kind==='maresme'?'maresme:'+nk(parsed.cat).replace(/[^a-z]+/g,'-').replace(/^-|-$/g,''):'valles:'+nk(parsed.cat);
+    const mine=parsed.rows.filter(r=>r.local&&r.vis&&(isSC(r.local)||isSC(r.vis))&&!/^reposa$/i.test(r.local)&&!/^reposa$/i.test(r.vis));
+    if(!mine.length)return null;
+    let id=ESC_KEYS[key]||(key.indexOf('maresme:cadet-juvenil')===0?9003:0);
+    if(!id){let map={};try{map=JSON.parse(localStorage.getItem('partidos-esc-ids')||'{}');}catch(e){}
+      if(!map[key]){map[key]=9100+Object.keys(map).length;try{localStorage.setItem('partidos-esc-ids',JSON.stringify(map));}catch(e){}}id=map[key];}
+    const label=ESC_LABEL[id]||(kind==='maresme'?`${tidyName(parsed.cat)} · Jocs Esportius del Maresme`:`${tidyName(parsed.cat)}${parsed.grup&&nk(parsed.grup)!==nk(parsed.cat)?' · '+tidyName(parsed.grup):''} · Consell Esportiu Vallès Oriental`);
+    // fechas
+    const toIso=d=>{const m=d.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);return m?isoFrom(m[1],m[2],m[3]):'';};
+    const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return keyOf(d);};
+    const diff=(a,b)=>Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/864e5);
+    mine.sort((a,b)=>a.j-b.j);
+    let prev='';const m=[];
+    mine.forEach(r=>{
+      let d=toIso(r.dia),nota='',f=1;
+      if(prev&&d){
+        const ok=x=>diff(x,prev)>=-2&&diff(x,prev)<=45;
+        if(!ok(d)){
+          const [dd,mm]=[d.slice(8,10),d.slice(5,7)],py=Number(prev.slice(0,4));
+          const cand=[isoFrom(dd,mm,py),isoFrom(dd,mm,py+1)].find(ok);
+          const fixed=cand||addDays(prev,7);
+          nota=`El PDF pone ${r.dia.replace(/-/g,'/')}; parece un error y lo he puesto el ${fixed.slice(8,10)}/${fixed.slice(5,7)}/${fixed.slice(0,4)}.`;f=0;d=fixed;
+        }
+      }
+      if(d)prev=d;
+      const home=isSC(r.local)?1:0;
+      const ve=escVenue(r.ven+(r.court?' '+r.court:''));
+      const t=/^(\d{1,2}):(\d{2})$/.test(r.hora||'')&&r.hora!=='00:00'&&r.hora!=='0:00'?r.hora.replace(/^(\d):/,'0$1:'):null;
+      m.push({j:r.j,d,t,h:home,r:tidyName(home?r.vis:r.local),v:ve.v,c:ve.c,la:ve.la,lo:ve.lo,f,s:'pendiente',x:'',n:nota});
+    });
+    return {id,cat:label,coach:'',coachNote:'no consta',url:'',src:'escolar',m};
+  }
+  async function escFromBlob(blob){
+    const pages=await pdfPages(blob);const flat=pages.flat().map(i=>i.s).join(' ');
+    const kind=/Jocs Esportius Escolars|Jornada\s+\d+/.test(flat)&&/CODI/.test(flat)?'maresme':'valles';
+    const parsed=kind==='maresme'?parseMaresme(pages):parseValles(pages);
+    const t=escTeams(parsed,kind);
+    return t&&t.m.length?t:null;
+  }
+  document.getElementById('qpdf').onchange=async ev=>{
+    const files=[...ev.target.files];ev.target.value='';if(!files.length)return;
+    const msg=document.getElementById('qpmsg');msg.className='fmsg';msg.textContent='Leyendo PDF…';
+    const teams=[],bad=[];
+    for(const f of files){
+      try{
+        const pages=await pdfPages(f);const flat=pages.flat().map(i=>i.s).join(' ');
+        const kind=/Jocs Esportius Escolars|Jornada\s+\d+/.test(flat)&&/CODI/.test(flat)?'maresme':'valles';
+        const parsed=kind==='maresme'?parseMaresme(pages):parseValles(pages);
+        const t=escTeams(parsed,kind);
+        if(t&&t.m.length)teams.push(t);else bad.push(f.name);
+      }catch(e){bad.push(f.name);}
+    }
+    if(!teams.length){msg.className='fmsg err';msg.textContent='No he encontrado partidos de Sant Celoni en ese PDF. ¿Es el calendario del Consell Esportiu?';return;}
+    const gid=storeUpdate(teams);
+    msg.className='fmsg';msg.textContent=teams.map(t=>`${t.cat}: ${t.m.length} partidos`).join(' · ')+(bad.length?` · No se pudo leer: ${bad.join(', ')}`:'');
+    runIsq(gid);
+  };
   // Actualización automática: al abrir la app (ordenador), como máximo una vez cada 20 h, solo si hay lector configurado
   async function autoRefreshIsq(){
     try{
-      const url=(ISQ_WORKER||localStorage.getItem(WKEY)||'').replace(/\/+$/,'');if(!url)return;
+      const url=(localStorage.getItem(WKEY)||ISQ_WORKER||'').replace(/\/+$/,'');if(!url)return;
       const AR='partidos-isq-auto';if(Date.now()-Number(localStorage.getItem(AR)||0)<20*3600*1000)return;
       const have=new Set(matches.filter(m=>m.isq).map(m=>Number(m.isq.split('-')[0])));if(!have.size)return;
       const res=await isqFetchAll(url);if(!res.got.length)return;
@@ -1828,7 +2065,7 @@ body.ro .app{padding-bottom:24px}
   }
   function snapshot(){
     const ms=matches.map(m=>{const c=Object.assign({},m);['lat','lon','isqD','isqT','isqCoach','id'].forEach(k=>delete c[k]);if(c.isq)c.isq=1;return c;});
-    return {v:1,at:new Date().toISOString(),matches:ms,cfg:{pairs:cfg.pairs,src:cfg.src,def:cfg.def,buffer:cfg.buffer}};
+    return {v:1,at:new Date().toISOString(),matches:ms,cfg:{pairs:cfg.pairs,src:cfg.src,def:cfg.def,buffer:cfg.buffer,coachAliases:cfg.coachAliases||''}};
   }
   const pdlg=document.getElementById('pdlg'),plink=document.getElementById('plink'),pmsg=document.getElementById('pmsg');
   document.getElementById('pubBtn').onclick=async()=>{
@@ -1866,7 +2103,7 @@ body.ro .app{padding-bottom:24px}
   }
   function applyData(d,persist){
     matches=(Array.isArray(d.matches)?d.matches:[]).map(m=>Object.assign({id:uid()},m));
-    if(d.cfg){cfg.pairs=d.cfg.pairs||{};cfg.src=d.cfg.src||{};if(Number.isFinite(d.cfg.def))cfg.def=d.cfg.def;if(Number.isFinite(d.cfg.buffer))cfg.buffer=d.cfg.buffer;}
+    if(d.cfg){cfg.pairs=d.cfg.pairs||{};cfg.src=d.cfg.src||{};if(Number.isFinite(d.cfg.def))cfg.def=d.cfg.def;if(Number.isFinite(d.cfg.buffer))cfg.buffer=d.cfg.buffer;if(typeof d.cfg.coachAliases==='string')cfg.coachAliases=d.cfg.coachAliases;}
     if(persist!==false){try{localStorage.setItem(ROSTORE,JSON.stringify(d));}catch(e){}}
     bar(`Solo lectura · datos del ${fmtAt(d.at)}. Para actualizarlos, abre el enlace nuevo que te envíen.`);
     const first=matches.map(m=>m.date).filter(x=>x>=todayKey).sort()[0];
