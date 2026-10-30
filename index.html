@@ -340,6 +340,8 @@ body.ro .app{padding-bottom:24px}
 .robar{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:13.5px;color:var(--muted)}
 .robar .btn{padding:8px 12px;font-size:13px;flex:none}
 @media (max-width:720px){.actionbar{grid-template-columns:repeat(5,1fr)!important}.actionbar .btn{font-size:12px}}
+body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg label[title^="Carga un archivo"]{display:none}
+.robar{flex-wrap:wrap}.robtns{display:flex;gap:8px;flex-wrap:wrap}.robtns .btn{display:inline-flex;align-items:center;justify-content:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -449,6 +451,7 @@ body.ro .app{padding-bottom:24px}
   <form id="pf" method="dialog" novalidate>
     <h2 id="pTitle">Enviar el calendario al móvil</h2>
     <p class="hint">Se crea un <b>enlace con todos tus partidos</b>. Envíatelo (WhatsApp, correo, notas…) y ábrelo en el móvil: la app se abre en solo lectura con estos datos. Cuando cambies algo, genera y envía un enlace nuevo. No hace falta cuenta ni GitHub.</p>
+    <label class="chk"><input type="checkbox" id="pshort"> Enlace más corto: sin los partidos ya jugados</label>
     <label class="fld">Enlace
       <textarea id="plink" rows="4" readonly style="width:100%;font-size:12px"></textarea></label>
     <div class="fmsg" id="pmsg" aria-live="polite"></div>
@@ -624,7 +627,13 @@ body.ro .app{padding-bottom:24px}
     }catch(e){}
     return null;
   }
-  function save(){if(typeof RO!=='undefined'&&RO)return;try{localStorage.setItem(STORE,JSON.stringify(matches))}catch(e){}}
+  function save(){
+    if(typeof RO!=='undefined'&&RO){                 // móvil: se guarda en la copia de solo lectura
+      try{const d=JSON.parse(localStorage.getItem('partidos-ro')||'{}');d.v=1;d.at=new Date().toISOString();d.matches=matches;localStorage.setItem('partidos-ro',JSON.stringify(d));try{bar(`Solo lectura · datos de ${fmtAt(d.at)}. Pulsa «Actualizar datos» o abre el enlace nuevo que te envíen.`);}catch(e2){}}catch(e){}
+      return;
+    }
+    try{localStorage.setItem(STORE,JSON.stringify(matches))}catch(e){}
+  }
   const GSTORE='partidos-v2-geo';
   function loadCfg(){
     try{
@@ -667,7 +676,7 @@ body.ro .app{padding-bottom:24px}
   }
 
   // Solo lectura: móviles y tabletas (pantalla táctil sin ratón). Para editar desde un móvil, añade ?editar=1 a la dirección.
-  const RO=location.hash.startsWith('#d=')||(!/[?&]editar=1/.test(location.search)&&window.matchMedia('(hover:none) and (pointer:coarse)').matches);
+  const RO=location.hash.startsWith('#d=')||location.hash.startsWith('#s=')||(!/[?&]editar=1/.test(location.search)&&window.matchMedia('(hover:none) and (pointer:coarse)').matches);
   const ROSTORE='partidos-ro';
   let matches=RO?(()=>{try{const d=JSON.parse(localStorage.getItem(ROSTORE)||'null');return d&&Array.isArray(d.matches)?d.matches:[];}catch(e){return [];}})():load(),seeded=false;
   if(!RO&&!Array.isArray(matches)){matches=seed();save();seeded=true;}
@@ -2016,10 +2025,10 @@ body.ro .app{padding-bottom:24px}
     try{
       const url=(localStorage.getItem(WKEY)||ISQ_WORKER||'').replace(/\/+$/,'');if(!url)return;
       const AR='partidos-isq-auto';if(Date.now()-Number(localStorage.getItem(AR)||0)<20*3600*1000)return;
-      const have=new Set(matches.filter(m=>m.isq).map(m=>Number(m.isq.split('-')[0])));if(!have.size)return;
+      const have=new Set(matches.filter(m=>m.isq).map(m=>Number(m.isq.split('-')[0])));if(!have.size&&!RO)return;
       const res=await isqFetchAll(url);if(!res.got.length)return;
       const gid=storeUpdate(res.got);localStorage.setItem(AR,String(Date.now()));
-      runIsq(new Set([...gid].filter(id=>have.has(id))),true);
+      runIsq(have.size?new Set([...gid].filter(id=>have.has(id))):gid,true);
     }catch(e){}
   }
   document.getElementById('qupd').onchange=async ev=>{
@@ -2063,28 +2072,59 @@ body.ro .app{padding-bottom:24px}
     for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i);
     return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
   }
-  function snapshot(){
-    const ms=matches.map(m=>{const c=Object.assign({},m);['lat','lon','isqD','isqT','isqCoach','id'].forEach(k=>delete c[k]);if(c.isq)c.isq=1;return c;});
-    return {v:1,at:new Date().toISOString(),matches:ms,cfg:{pairs:cfg.pairs,src:cfg.src,def:cfg.def,buffer:cfg.buffer,coachAliases:cfg.coachAliases||''}};
+  function snapshot(short){
+    let list=matches;
+    if(short){const d=new Date();d.setDate(d.getDate()-7);const cut=keyOf(d);list=matches.filter(m=>!m.done&&m.date>=cut);}   // sin partidos ya jugados
+    const ms=list.map(m=>{
+      const c=Object.assign({},m);['lat','lon','isqD','isqT','isqCoach','id'].forEach(k=>delete c[k]);if(c.isq)c.isq=1;
+      Object.keys(c).forEach(k=>{const v=c[k];if(v===''||v===null||v===undefined||(v===false&&k!=='confirmed')||(k==='fed'&&!v))delete c[k];});   // enlace más corto: se quitan los vacíos
+      return c;
+    });
+    const used=new Set(sameDayPairs().map(([a,b])=>pk(a,b)));                // solo los trayectos que importan
+    const pairs={},src={};Object.keys(cfg.pairs||{}).forEach(k=>{if(used.has(k)){pairs[k]=cfg.pairs[k];if(cfg.src&&cfg.src[k])src[k]=cfg.src[k];}});
+    return {v:1,at:new Date().toISOString(),matches:ms,cfg:{pairs,src,def:cfg.def,buffer:cfg.buffer,coachAliases:cfg.coachAliases||''}};
   }
   const pdlg=document.getElementById('pdlg'),plink=document.getElementById('plink'),pmsg=document.getElementById('pmsg');
-  document.getElementById('pubBtn').onclick=async()=>{
+  const workerUrl=()=>(localStorage.getItem(WKEY)||ISQ_WORKER||'').replace(/\/+$/,'');
+  async function makeLink(){
     pmsg.className='fmsg';pmsg.textContent='Preparando el enlace…';plink.value='';
-    if(typeof pdlg.showModal==='function')pdlg.showModal();else pdlg.setAttribute('open','');
+    let shortNote='';
+    const wu=workerUrl();
+    if(wu){                                                       // enlace corto: el calendario se guarda en el lector
+      try{
+        const r=await fetch(wu+'/share',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({json:snapshot(false)})});
+        const d=await r.json();
+        if(d.ok&&d.id){
+          plink.value=location.origin+location.pathname+'#s='+d.id;
+          pmsg.className='fmsg';pmsg.textContent=`Enlace corto listo (${plink.value.length} caracteres). Lleva el calendario tal como está ahora; caduca a los 6 meses.`;
+          document.getElementById('pshort').closest('label').hidden=true;
+          document.getElementById('pshare').hidden=!navigator.share;return;
+        }
+        shortNote=d.error?` (enlace corto no disponible: ${d.error})`:'';
+      }catch(e){shortNote=' (enlace corto no disponible: no se pudo conectar con el lector)';}
+    }
+    document.getElementById('pshort').closest('label').hidden=false;
     try{
-      const code=await pack(snapshot());
+      const code=await pack(snapshot(document.getElementById('pshort').checked));
       plink.value=location.origin+location.pathname+'#d='+code;
-      pmsg.textContent=`Enlace listo (${plink.value.length.toLocaleString('es-ES')} caracteres). Si tu aplicación de mensajes lo corta, usa «Descargar como archivo».`;
+      const n=plink.value.length;
+      pmsg.className='fmsg'+(n>6000?' err':'');
+      pmsg.textContent=`Enlace largo listo (${n.toLocaleString('es-ES')} caracteres)${shortNote}.`+(n>6000?' Es largo y algunas aplicaciones de mensajes o de correo lo cortan: marca «Enlace más corto» o usa «Descargar como archivo».':' Si tu aplicación de mensajes lo corta, usa «Descargar como archivo».');
     }catch(e){pmsg.className='fmsg err';pmsg.textContent='Este navegador no puede crear el enlace. Usa «Descargar como archivo».';}
     document.getElementById('pshare').hidden=!navigator.share;
+  }
+  document.getElementById('pubBtn').onclick=()=>{
+    if(typeof pdlg.showModal==='function')pdlg.showModal();else pdlg.setAttribute('open','');
+    makeLink();
   };
+  document.getElementById('pshort').onchange=makeLink;
   document.getElementById('pcopy').onclick=async()=>{
     try{await navigator.clipboard.writeText(plink.value);pmsg.className='fmsg';pmsg.textContent='Enlace copiado. Pégalo en un mensaje y envíatelo.';}
     catch(e){plink.select();pmsg.className='fmsg';pmsg.textContent='Selecciona el enlace y cópialo (Ctrl+C).';}
   };
   document.getElementById('pshare').onclick=()=>{navigator.share({title:'Calendario de partidos',url:plink.value}).catch(()=>{});};
   document.getElementById('pfile').onclick=()=>{
-    const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot())],{type:'application/json'}));
+    const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot(false))],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download='datos.json';document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),2000);
     pmsg.className='fmsg';pmsg.textContent='Archivo descargado. Envíatelo al móvil y ábrelo con «Cargar archivo» desde la app.';
@@ -2095,7 +2135,8 @@ body.ro .app{padding-bottom:24px}
   // --- móvil: solo lectura ---
   function bar(txt){
     robar.hidden=false;
-    robar.innerHTML=`<span>${txt}</span><label class="btn" style="cursor:pointer">Cargar archivo<input type="file" id="rofile" accept=".json,application/json" hidden></label>`;
+    robar.innerHTML=`<span>${txt}</span><span class="robtns"><button type="button" class="btn" id="roupd">Actualizar datos</button><label class="btn" style="cursor:pointer">Cargar archivo<input type="file" id="rofile" accept=".json,application/json" hidden></label></span>`;
+    document.getElementById('roupd').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
     document.getElementById('rofile').onchange=async ev=>{
       const f=ev.target.files[0];if(!f)return;
       try{applyData(JSON.parse(await f.text()));}catch(e){say('Ese archivo no es válido.','bad',6000);}
@@ -2105,24 +2146,33 @@ body.ro .app{padding-bottom:24px}
     matches=(Array.isArray(d.matches)?d.matches:[]).map(m=>Object.assign({id:uid()},m));
     if(d.cfg){cfg.pairs=d.cfg.pairs||{};cfg.src=d.cfg.src||{};if(Number.isFinite(d.cfg.def))cfg.def=d.cfg.def;if(Number.isFinite(d.cfg.buffer))cfg.buffer=d.cfg.buffer;if(typeof d.cfg.coachAliases==='string')cfg.coachAliases=d.cfg.coachAliases;}
     if(persist!==false){try{localStorage.setItem(ROSTORE,JSON.stringify(d));}catch(e){}}
-    bar(`Solo lectura · datos del ${fmtAt(d.at)}. Para actualizarlos, abre el enlace nuevo que te envíen.`);
+    bar(`Solo lectura · datos del ${fmtAt(d.at)}. Pulsa «Actualizar datos» o abre el enlace nuevo que te envíen.`);
     const first=matches.map(m=>m.date).filter(x=>x>=todayKey).sort()[0];
     if(first){const t=fromKey(first);view={y:t.getFullYear(),m:t.getMonth()};selected=first;}
     render();
   }
   async function initRO(){
     const h=location.hash;
+    if(h.startsWith('#s=')){
+      try{
+        const wu=workerUrl();if(!wu)throw new Error('sin lector');
+        const r=await fetch(wu+'/share/'+encodeURIComponent(h.slice(3)));const d=await r.json();
+        if(!d.ok)throw new Error(d.error||'no se pudo abrir');
+        applyData(d.json||await unpack(d.code));history.replaceState(null,'',location.pathname+location.search);autoRefreshIsq();return;
+      }catch(e){say('No se pudo abrir el enlace: '+(e.message||'error')+'. Pide que te lo envíen otra vez.','bad',14000);}
+    }
     if(h.startsWith('#d=')){
-      try{applyData(await unpack(h.slice(3)));history.replaceState(null,'',location.pathname+location.search);return;}
-      catch(e){say('El enlace está incompleto o dañado. Pide que te lo envíen otra vez.','bad',9000);}
+      try{applyData(await unpack(h.slice(3)));history.replaceState(null,'',location.pathname+location.search);autoRefreshIsq();return;}
+      catch(e){say(typeof DecompressionStream==='undefined'?'Este navegador es demasiado antiguo para abrir el enlace. Actualízalo, o pide el archivo y usa «Cargar archivo».':'El enlace está incompleto o dañado: las aplicaciones de mensajes a veces cortan los enlaces largos. Pide que te lo envíen otra vez (mejor el «enlace más corto») o como archivo.','bad',14000);}
     }
     let c=null;try{c=JSON.parse(localStorage.getItem(ROSTORE)||'null');}catch(e){}
     if(c&&c.matches)applyData(c,false);
-    else bar('Todavía no hay calendario. Abre el enlace que te envíen desde el ordenador.');
+    else bar('Todavía no hay calendario. Pulsa «Actualizar datos» o abre el enlace que te envíen desde el ordenador.');
     try{ // opcional: si alguien sube un datos.json junto a la app
       const r=await fetch('datos.json?t='+Date.now(),{cache:'no-store'});
       if(r.ok){const d=await r.json();if(!c||String(d.at)>String(c.at))applyData(d);}
     }catch(e){}
+    autoRefreshIsq();
   }
 
   /* ---------- eventos ---------- */

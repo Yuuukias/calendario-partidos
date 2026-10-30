@@ -130,3 +130,15 @@ En **iSquad > Horarios escolares (PDF)** se puede elegir el PDF del calendario d
 ## CEVO automático
 
 Si el lector está actualizado (nuevo `worker.js`), la actualización automática también trae los calendarios escolares del CEVO (Infantil y Aleví mixt) desde su PDF de exportación. El Maresme sigue siendo manual (PDF).
+
+## Móvil: actualizar datos
+
+El móvil sigue siendo de solo lectura (no se editan partidos), pero ahora puede **traer datos nuevos**: se actualiza solo al abrirla (como máximo una vez al día, si hay lector) y tiene el botón **Actualizar datos** en la franja gris de arriba, con la opción de cargar un PDF escolar. Los cambios se guardan en la copia del móvil. Un enlace nuevo de **Compartir** desde el ordenador sustituye esa copia. Un móvil sin datos puede cargarlo todo desde el lector, pero sin las confirmaciones hechas en el ordenador.
+
+## Enlaces de Compartir más cortos
+
+El enlace ya no incluye los trayectos que no hacen falta ni los campos vacíos (antes podía pasar de 20.000 caracteres si había muchos trayectos guardados). Además hay una casilla **«Enlace más corto: sin los partidos ya jugados»**. Si una aplicación de mensajes corta el enlace, usa esa casilla o «Descargar como archivo» (en el móvil: «Cargar archivo»).
+
+## Enlace corto
+
+Si el lector tiene el KV `SHARE` (ver `lector-isquad/LEEME.md`), **Compartir** da un enlace de unos 45 caracteres. Si no, la app da el enlace largo como hasta ahora.
