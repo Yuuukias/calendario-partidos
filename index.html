@@ -1811,7 +1811,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v31';
+  const APP_VERSION='v32';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/');const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
@@ -1831,13 +1831,14 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     return {ids:ids.concat(cids),got,fail};
   }
   function recordCheck(res,how){
-    try{localStorage.setItem('partidos-isq-last',JSON.stringify({at:new Date().toISOString(),how,total:res.ids.length,ok:res.got.length,fail:res.fail.slice(0,6)}));}catch(e){}
+    try{localStorage.setItem('partidos-isq-last',JSON.stringify({at:new Date().toISOString(),how,total:res.ids.length,ok:res.got.length,fail:res.fail.slice(0,14).map(x=>({id:x.id,error:String(x.error||'').slice(0,420)}))}));}catch(e){}
   }
   function lastCheckText(){
     let l=null;try{l=JSON.parse(localStorage.getItem('partidos-isq-last')||'null');}catch(e){}
     if(!l)return 'Todavía no se ha comprobado nada desde esta versión.';
     const nm=id=>/^cevo-/.test(String(id))?'CEVO '+String(id).slice(5):'equipo '+id;
-    const f=l.fail.map(x=>`${nm(x.id)}: ${x.error}`).join(' · ');
+    const uniq=[...new Set(l.fail.map(x=>x.error))];
+    const f=uniq.length===1&&l.fail.length>1?`${l.fail.length} categorías con el mismo fallo → ${uniq[0]}`:l.fail.map(x=>`${nm(x.id)}: ${x.error}`).join(' · ');
     return `Última comprobación (${l.how}): ${fmtAt(l.at)} · ${l.ok} de ${l.total} categorías leídas.`+(f?' Fallos → '+f:'');
   }
   function storeUpdate(got){
