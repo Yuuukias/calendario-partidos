@@ -142,3 +142,7 @@ El enlace ya no incluye los trayectos que no hacen falta ni los campos vacíos (
 ## Enlace corto
 
 Si el lector tiene el KV `SHARE` (ver `lector-isquad/LEEME.md`), **Compartir** da un enlace de unos 45 caracteres. Si no, la app da el enlace largo como hasta ahora.
+
+## Día por defecto de los partidos sin hora
+
+Todo partido **local** que todavía no tiene hora (de la federación o escolar) se coloca en **domingo**; si el origen lo trae en sábado, pasa al domingo. En la federación, si el día ya está fijado, no se toca. Los visitantes no se tocan. Lo que muevas a mano («Mover al sábado/domingo») se respeta al volver a importar. Se aplica a los datos nuevos y, una sola vez, a lo ya importado.

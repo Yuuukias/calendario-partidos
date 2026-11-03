@@ -1757,6 +1757,15 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   }
   const nk=v=>norm(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const canonV=v=>{if(!v)return '';const f=matches.find(m=>m.venue&&nk(m.venue)===nk(v));return f?f.venue:v;};
+  /* Día por defecto de los partidos SIN hora fijada: si son LOCALES (federación o escolares) -> domingo */
+  const dowOf=iso=>new Date(iso+'T12:00:00').getDay();
+  const shiftIso=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return keyOf(d);};
+  function defaultDay(d,hasTime,isEsc,home,dayFixed){
+    if(hasTime||!d)return d;
+    if(!home)return d;                                              // los visitantes se dejan como vienen
+    if(!isEsc&&dayFixed)return d;                                   // federación: si el día ya está fijado, no se toca
+    return dowOf(d)===6?shiftIso(d,1):d;                            // local sin hora: sábado -> domingo
+  }
   function runIsq(selOverride,quiet){
     const ISQ=getISQ();if(!ISQ)return;
     const sel=selOverride||new Set([...qlist.querySelectorAll('input:checked')].map(i=>Number(i.value)));
@@ -1770,7 +1779,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
         const base={rival:x.r,side:x.h?'L':'V',team:t.cat,venue:canonV(x.v||''),court:x.c||'',lat:x.la,lon:x.lo,club:'SC',result:x.x||'',done:x.s==='finalizado',fed:!!x.f,nota:x.n||''};
         let m=matches.find(q=>q.isq===key);
         if(!m){
-          m=Object.assign({id:uid(),date:x.d,time:t0||'00:00',dur,noTime:!t0,confirmed:x.s==='finalizado',coach:t.coach||'',isq:key,isqD:x.d,isqT:t0,isqCoach:t.coach||''},base);
+          m=Object.assign({id:uid(),date:defaultDay(x.d,!!t0,t.id>=9000,!!x.h,!!x.f),time:t0||'00:00',dur,noTime:!t0,confirmed:x.s==='finalizado',coach:t.coach||'',isq:key,isqD:x.d,isqT:t0,isqCoach:t.coach||''},base);
           matches.push(m);add++;fresh.push(m.date);
         }else{
           const chg=(m.isqD!==x.d||m.isqT!==t0)||((m.result||'')!==(x.x||''))||(!!x.v&&nk(m.venue)!==nk(canonV(x.v)));
@@ -1780,7 +1789,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
           m.isqCoach=t.coach||'';
           if(m.isqD!==x.d||m.isqT!==t0){
             if(m.confirmed===true&&!m.done){m.prev=`${shortDay(m.date)}${m.noTime?'':' '+m.time}`;rec++;}
-            m.date=x.d;m.time=t0||'00:00';m.noTime=!t0;
+            m.date=defaultDay(x.d,!!t0,t.id>=9000,!!x.h,!!x.f);m.time=t0||'00:00';m.noTime=!t0;
             if(!m.done)m.confirmed=false;
             m.isqD=x.d;m.isqT=t0;
           }
@@ -2212,7 +2221,23 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     matches=[];save();this.dataset.armed='';this.textContent='Borrar todos los partidos';render();
   };
 
+  function applyDayRule(){
+    try{
+      const K='partidos-rule-v2';if(localStorage.getItem(K))return;localStorage.setItem(K,'1');
+      let n=0;
+      matches.forEach(m=>{
+        if(!m.isq||!m.noTime)return;
+        const esc=Number(m.isq.split('-')[0])>=9000;
+        const prevRule=esc&&dowOf(m.isqD)===0&&m.date===shiftIso(m.isqD,-1);     // lo que movió la versión anterior (escolar a sábado)
+        if(m.date!==m.isqD&&!prevRule)return;                                    // lo movido a mano se respeta
+        const nd=defaultDay(m.isqD,false,esc,m.side==='L',!!m.fed);
+        if(nd!==m.date){m.date=nd;n++;}
+      });
+      if(n){save();render();say(`${n} ${n===1?'partido local sin hora se ha movido':'partidos locales sin hora se han movido'} al domingo.`,'ok',12000);}
+    }catch(e){console.error('applyDayRule',e);}
+  }
   function autoApplyIsq(){
+    applyDayRule();
     try{
       const ISQ=getISQ();if(!ISQ)return;
       const AK='partidos-isq-applied',last=localStorage.getItem(AK)||'';
