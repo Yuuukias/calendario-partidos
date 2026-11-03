@@ -1811,21 +1811,21 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v32';
+  const APP_VERSION='v33';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
-    const r0=await fetch(url+'/');const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
+    const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
     const got=[],fail=[];
     const cids=Array.isArray(d0.cevo)?d0.cevo:[];             // calendarios escolares del CEVO (PDF), si el lector los trae
     const total=ids.length+cids.length;
     for(let i=0;i<ids.length;i++){
       if(progress)progress(i+1,total);
-      try{const r=await fetch(`${url}/?team=${ids[i]}`);const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
+      try{const r=await fetch(`${url}/?team=${ids[i]}`,{cache:'no-store'});const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
       catch(e){fail.push({id:ids[i],error:(e&&e.message)||String(e)});}
     }
     for(let i=0;i<cids.length;i++){
       if(progress)progress(ids.length+i+1,total);
-      try{const r=await fetch(`${url}/?cevo=${cids[i]}`);if(!r.ok)throw new Error('http');const t=await escFromBlob(await r.blob());if(!t)throw new Error('sin partidos');got.push(t);}
+      try{const r=await fetch(`${url}/?cevo=${cids[i]}`,{cache:'no-store'});if(!r.ok)throw new Error('http');const t=await escFromBlob(await r.blob());if(!t)throw new Error('sin partidos');got.push(t);}
       catch(e){fail.push({id:'cevo-'+cids[i],error:(e&&e.message)||String(e)});}
     }
     return {ids:ids.concat(cids),got,fail};
@@ -2186,7 +2186,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     if(h.startsWith('#s=')){
       try{
         const wu=workerUrl();if(!wu)throw new Error('sin lector');
-        const r=await fetch(wu+'/share/'+encodeURIComponent(h.slice(3)));const d=await r.json();
+        const r=await fetch(wu+'/share/'+encodeURIComponent(h.slice(3)),{cache:'no-store'});const d=await r.json();
         if(!d.ok)throw new Error(d.error||'no se pudo abrir');
         applyData(d.json||await unpack(d.code));history.replaceState(null,'',location.pathname+location.search);autoRefreshIsq();return;
       }catch(e){say('No se pudo abrir el enlace: '+(e.message||'error')+'. Pide que te lo envíen otra vez.','bad',14000);}

@@ -150,3 +150,7 @@ Todo partido **local** que todavía no tiene hora (de la federación o escolar) 
 ## Comprobación automática y diagnóstico
 
 La app revisa el lector cada vez que se abre en el ordenador (como máximo una vez cada 10 minutos; el lector guarda cada lectura 1 hora). En **iSquad** se ve la **versión de la app** y la **última comprobación**: cuántas categorías se leyeron y, si alguna falló, el motivo (por ejemplo «iSquad respondió 403»).
+
+## Sin memoria del navegador para el lector
+
+Las peticiones al lector se hacen sin usar la copia guardada por el navegador (`no-store`), así que nunca se reutiliza una respuesta antigua. Solo el lector guarda una copia de 1 hora.
