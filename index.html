@@ -487,6 +487,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
         <input type="url" id="qworker" placeholder="https://lector-isquad.tu-usuario.workers.dev" inputmode="url" autocomplete="off"></label>
       <div class="actions"><span class="sp"></span><button type="button" class="btn primary" id="qrefresh">Actualizar desde iSquad</button></div>
       <div class="fmsg" id="qrmsg" aria-live="polite"></div>
+      <p class="hint" id="qlast"></p>
     </div>
     <div class="box">
       <b>Horarios escolares (PDF)</b>
@@ -495,6 +496,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       <div class="fmsg" id="qpmsg" aria-live="polite"></div>
     </div>
     <p class="hint" id="qupdinfo"></p>
+    <p class="hint" id="qver"></p>
     <div class="fmsg" id="qmsg" aria-live="polite"></div>
     <div class="actions">
       <label class="btn" style="cursor:pointer" title="Carga un archivo de actualización con horarios nuevos">Cargar actualización<input type="file" id="qupd" accept=".json,application/json" hidden></label>
@@ -1740,6 +1742,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
         (t.url?`<small><a href="${esc(t.url)}" target="_blank" rel="noopener">Ver en iSquad</a></small>`:`<small>Fuente: calendario escolar (PDF)</small>`)+`</span></label>`;
     }).join('');
     qmsg.className='fmsg';qmsg.textContent='';
+    document.getElementById('qlast').textContent=lastCheckText();document.getElementById('qver').textContent='Versión de la app: '+APP_VERSION;
     document.getElementById('qupdinfo').textContent=ISQ.upd?`Incluye una actualización cargada con datos del ${shortDay(ISQ.upd)}/${String(ISQ.upd).slice(0,4)}.`:'¿Hay horarios nuevos en las webs? Pídeme una actualización, descarga el archivo y cárgalo con «Cargar actualización».';
     if(!qdlg.open){if(typeof qdlg.showModal==='function')qdlg.showModal();else qdlg.setAttribute('open','');}
   }
@@ -1808,6 +1811,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
+  const APP_VERSION='v31';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/');const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
@@ -1817,14 +1821,24 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     for(let i=0;i<ids.length;i++){
       if(progress)progress(i+1,total);
       try{const r=await fetch(`${url}/?team=${ids[i]}`);const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
-      catch(e){fail.push(ids[i]);}
+      catch(e){fail.push({id:ids[i],error:(e&&e.message)||String(e)});}
     }
     for(let i=0;i<cids.length;i++){
       if(progress)progress(ids.length+i+1,total);
       try{const r=await fetch(`${url}/?cevo=${cids[i]}`);if(!r.ok)throw new Error('http');const t=await escFromBlob(await r.blob());if(!t)throw new Error('sin partidos');got.push(t);}
-      catch(e){fail.push('cevo-'+cids[i]);}
+      catch(e){fail.push({id:'cevo-'+cids[i],error:(e&&e.message)||String(e)});}
     }
     return {ids:ids.concat(cids),got,fail};
+  }
+  function recordCheck(res,how){
+    try{localStorage.setItem('partidos-isq-last',JSON.stringify({at:new Date().toISOString(),how,total:res.ids.length,ok:res.got.length,fail:res.fail.slice(0,6)}));}catch(e){}
+  }
+  function lastCheckText(){
+    let l=null;try{l=JSON.parse(localStorage.getItem('partidos-isq-last')||'null');}catch(e){}
+    if(!l)return 'Todavía no se ha comprobado nada desde esta versión.';
+    const nm=id=>/^cevo-/.test(String(id))?'CEVO '+String(id).slice(5):'equipo '+id;
+    const f=l.fail.map(x=>`${nm(x.id)}: ${x.error}`).join(' · ');
+    return `Última comprobación (${l.how}): ${fmtAt(l.at)} · ${l.ok} de ${l.total} categorías leídas.`+(f?' Fallos → '+f:'');
   }
   function storeUpdate(got){
     let u=null;try{u=JSON.parse(localStorage.getItem(UPDKEY)||'null');}catch(e){}
@@ -1841,11 +1855,12 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     btn.disabled=true;let res;
     try{res=await isqFetchAll(url,(i,n)=>{msg.className='fmsg';msg.textContent=`Leyendo iSquad… ${i} de ${n}`;});}
     catch(e){msg.className='fmsg err';msg.textContent='No se pudo conectar con el lector. Revisa la dirección y tu conexión.';btn.disabled=false;return;}
-    btn.disabled=false;
-    if(!res.got.length){msg.className='fmsg err';msg.textContent='No se pudo leer ninguna categoría. Puede que iSquad esté rechazando las visitas automáticas; prueba más tarde.';return;}
+    btn.disabled=false;recordCheck(res,'manual');
+    if(!res.got.length){msg.className='fmsg err';msg.textContent='No se pudo leer ninguna categoría. '+lastCheckText().replace(/^.*?leídas\.\s*/,'');return;}
     const gid=storeUpdate(res.got);
     try{localStorage.setItem('partidos-isq-auto',String(Date.now()));}catch(e){}
     runIsq(gid);
+    msg.className='fmsg'+(res.fail.length?' err':'');msg.textContent=lastCheckText();
     if(res.fail.length)say(`No se pudieron leer ${res.fail.length} de ${res.ids.length} categorías; se han conservado sus datos anteriores.`,'bad',10000);
   };
   /* ---------- horarios escolares: PDF del Consell Esportiu (Vallès Oriental y Maresme) ---------- */
@@ -2033,10 +2048,15 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   async function autoRefreshIsq(){
     try{
       const url=(localStorage.getItem(WKEY)||ISQ_WORKER||'').replace(/\/+$/,'');if(!url)return;
-      const AR='partidos-isq-auto';if(Date.now()-Number(localStorage.getItem(AR)||0)<20*3600*1000)return;
+      const AR='partidos-isq-auto';if(Date.now()-Number(localStorage.getItem(AR)||0)<10*60*1000)return;   // cada vez que se abre (máx. una vez cada 10 min)
       const have=new Set(matches.filter(m=>m.isq).map(m=>Number(m.isq.split('-')[0])));if(!have.size&&!RO)return;
-      const res=await isqFetchAll(url);if(!res.got.length)return;
-      const gid=storeUpdate(res.got);localStorage.setItem(AR,String(Date.now()));
+      localStorage.setItem(AR,String(Date.now()));
+      let res;
+      try{res=await isqFetchAll(url);}
+      catch(e){recordCheck({ids:[],got:[],fail:[{id:'lector',error:'no se pudo conectar con el lector'}]},'automática');return;}
+      recordCheck(res,'automática');
+      if(!res.got.length)return;
+      const gid=storeUpdate(res.got);
       runIsq(have.size?new Set([...gid].filter(id=>have.has(id))):gid,true);
     }catch(e){}
   }
