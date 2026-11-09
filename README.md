@@ -154,3 +154,7 @@ La app revisa el lector cada vez que se abre en el ordenador (como máximo una v
 ## Sin memoria del navegador para el lector
 
 Las peticiones al lector se hacen sin usar la copia guardada por el navegador (`no-store`), así que nunca se reutiliza una respuesta antigua. Solo el lector guarda una copia de 1 hora.
+
+## Filtro por entrenador
+
+Junto a los botones de club hay un selector **«Todos los entrenadores»**. Al elegir uno, el calendario, los contadores, el detalle del día y los avisos enseñan solo sus partidos. Los nombres equivalentes («Juanma» y «Juan Manuel Arguelles») cuentan como la misma persona. Los partidos sin entrenador no salen mientras haya un filtro puesto. Se recuerda la elección y también está en el móvil.

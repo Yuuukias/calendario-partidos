@@ -334,6 +334,8 @@ dialog form{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflo
 }
 .clubfilter{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
 .clubfilter button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;display:inline-flex;gap:8px;align-items:center;min-height:40px}
+.clubfilter select{border:1.5px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:9px 14px;font:inherit;font-weight:600;min-height:40px;max-width:100%}
+.clubfilter select.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .clubfilter button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 body.ro .actionbar,body.ro .foot,body.ro [data-add],body.ro [data-confirm],body.ro [data-confirm-day],body.ro .confall,body.ro .dact,body.ro .empty .btn{display:none!important}
 body.ro .app{padding-bottom:24px}
@@ -371,6 +373,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     <button type="button" data-f="ALL">Todos</button>
     <button type="button" data-f="SC"><i class="dot sc"></i>Sant Celoni</button>
     <button type="button" data-f="AM"><i class="dot am"></i>Arenys de Mar</button>
+    <select id="coachfilter" aria-label="Ver solo los partidos de un entrenador"><option value="">Todos los entrenadores</option></select>
   </div>
   <div class="legend" aria-label="Leyenda">
     <div class="grp"><span class="gt">Sant Celoni</span>
@@ -642,7 +645,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       const r=localStorage.getItem(TSTORE);
       if(r){
         const c=JSON.parse(r);
-        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachAliases:typeof c.coachAliases==='string'?c.coachAliases:'',coachOnly:c.coachOnly===undefined?true:!!c.coachOnly,filter:['SC','AM'].includes(c.filter)?c.filter:'ALL'};
+        return {def:Number.isFinite(c.def)?c.def:30,buffer:Number.isFinite(c.buffer)?c.buffer:10,area:typeof c.area==='string'?c.area:'',pairs:c.pairs||{},src:c.src||{},terms:{SC:(c.terms&&c.terms.SC)||'Sant Celoni',AM:(c.terms&&c.terms.AM)||'Arenys'},lastClub:c.lastClub==='AM'?'AM':'SC',coachAliases:typeof c.coachAliases==='string'?c.coachAliases:'',coachFilter:typeof c.coachFilter==='string'?c.coachFilter:'',coachOnly:c.coachOnly===undefined?true:!!c.coachOnly,filter:['SC','AM'].includes(c.filter)?c.filter:'ALL'};
       }
     }catch(e){}
     return null;
@@ -684,7 +687,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   if(!RO&&!Array.isArray(matches)){matches=seed();save();seeded=true;}
   if(RO)document.body.classList.add('ro');
   let cfg=loadCfg();
-  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachAliases:'',coachOnly:true,filter:'ALL'};saveCfg();}
+  if(!cfg){cfg={def:30,buffer:10,area:'',pairs:seeded?seedPairs():{},src:{},terms:{SC:'Sant Celoni',AM:'Arenys'},lastClub:'SC',coachAliases:'',coachFilter:'',coachOnly:true,filter:'ALL'};saveCfg();}
   let geo=loadGeo();
 
   const now=new Date();
@@ -755,7 +758,21 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     if(t.min>gap)return {kind:'travel',gap,need:t.min,est:t.est,first,second};
     return null;
   }
-  function inView(){return matches.filter(m=>cfg.filter==='ALL'||m.club===cfg.filter);}
+  function inView(){return matches.filter(m=>(cfg.filter==='ALL'||m.club===cfg.filter)&&(!cfg.coachFilter||sameCoach(m.coach,cfg.coachFilter)));}
+  // Selector de entrenador: agrupa los nombres equivalentes (Juanma = Juan Manuel Arguelles...) y enseña el más largo
+  function coachOptions(){
+    const g=coachGroups(),by=new Map();
+    matches.forEach(m=>{if(!m.coach)return;const k=g.find(g.plain(m.coach));const cur=by.get(k);if(!cur||m.coach.length>cur.length)by.set(k,m.coach);});
+    return [...by.values()].sort((a,b)=>a.localeCompare(b,'es'));
+  }
+  function syncCoachFilter(){
+    const sel=document.getElementById('coachfilter');if(!sel)return;
+    const opts=coachOptions();
+    if(cfg.coachFilter){const hit=opts.find(o=>sameCoach(o,cfg.coachFilter));if(hit)cfg.coachFilter=hit;else{cfg.coachFilter='';saveCfg();}}
+    sel.innerHTML='<option value="">Todos los entrenadores</option>'+opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+    sel.value=cfg.coachFilter||'';
+    sel.classList.toggle('on',!!cfg.coachFilter);
+  }
   function conflictMap(){
     const byDay={};inView().forEach(m=>{(byDay[m.date]=byDay[m.date]||[]).push(m)});
     const map=new Map();
@@ -1070,6 +1087,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   }
 
   function render(){
+    syncCoachFilter();
     const cm=conflictMap();
     renderHead(cm);renderGrid(cm);renderDay(cm);
     document.getElementById('legNoClub').hidden=!matches.some(m=>!m.club);
@@ -1811,7 +1829,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v33';
+  const APP_VERSION='v34';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
@@ -2086,6 +2104,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   }
 
   function syncFilter(){document.querySelectorAll('.clubfilter [data-f]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.f===cfg.filter)));}
+  document.getElementById('coachfilter').addEventListener('change',e=>{cfg.coachFilter=e.target.value;saveCfg();render();});
   document.querySelector('.clubfilter').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;cfg.filter=b.dataset.f;saveCfg();syncFilter();render();});
   syncFilter();
 
