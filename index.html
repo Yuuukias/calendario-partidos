@@ -344,6 +344,11 @@ body.ro .app{padding-bottom:24px}
 @media (max-width:720px){.actionbar{grid-template-columns:repeat(5,1fr)!important}.actionbar .btn{font-size:12px}}
 body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg label[title^="Carga un archivo"]{display:none}
 .robar{flex-wrap:wrap}.robtns{display:flex;gap:8px;flex-wrap:wrap}.robtns .btn{display:inline-flex;align-items:center;justify-content:center}
+.lanes{display:flex;margin:12px 0 -6px 50px;gap:0}
+.lanes span{flex:1;text-align:center;font-weight:700;font-size:13px;padding:4px 0;border-bottom:2px solid var(--line)}
+.lane{position:absolute;top:0;bottom:0}
+.lane+.lane{border-left:1px dashed var(--line)}
+.dgrp{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:16px 0 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -436,6 +441,9 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     <label class="fld">Lugar del partido <small>(nombre o dirección, con el pueblo)</small>
       <input type="text" name="venue" maxlength="60" placeholder="Ej. Campo municipal" list="venues" autocomplete="off">
       <datalist id="venues"></datalist>
+    </label>
+    <label class="fld">Pista <small>(para los partidos en casa)</small>
+      <select name="court"><option value="">Sin asignar</option><option value="Pista 1">Pista 1</option><option value="Pista 2">Pista 2</option></select>
     </label>
     <label class="fld">Entrenador<input type="text" name="coach" maxlength="40" placeholder="Nombre del entrenador"></label>
     <label class="fld">Equipo <small>(opcional)</small><input type="text" name="team" maxlength="60" placeholder="Ej. Sub-14"></label>
@@ -994,6 +1002,18 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     return out;
   }
 
+  /* Partidos en casa (Sant Celoni): se separan por pista (Pista 1 / Pista 2); los de fuera van aparte */
+  const courtNum=m=>{const x=String(m.court||'').match(/(\d+)/);return x?Number(x[1]):0;};
+  const laneKey=m=>m.side==='L'?('P'+courtNum(m)):'AW';
+  const laneLabel=k=>k==='AW'?'Fuera':(k==='P0'?'Sin pista':'Pista '+k.slice(1));
+  function laneOrder(list){
+    const keys=new Set(list.map(laneKey));const hasLocal=[...keys].some(k=>k!=='AW');const arr=[];
+    if(hasLocal)arr.push('P1','P2');
+    [...keys].filter(k=>/^P[3-9]/.test(k)).sort().forEach(k=>arr.push(k));
+    if(keys.has('P0'))arr.push('P0');
+    if(keys.has('AW'))arr.push('AW');
+    return arr;
+  }
   function renderDay(cm){
     const dt=fromKey(selected);
     const list=inView().filter(m=>m.date===selected).sort(byStart);
@@ -1036,7 +1056,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       html+=`<div class="okmsg"><b>Trayectos con margen suficiente</b><ul>${okT.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
     }
 
-    html+=`<div class="dlist">`+list.map(m=>{
+    const cardOf=m=>{
       const st=status(m,cm),local=m.side==='L',cross=crossText(m,cm),unc=m.confirmed===false&&!m.done;
       let when='Hora por confirmar';
       if(!m.noTime){const [s0,e0]=span(m);when=`${fmt(s0)}–${fmt(e0)}`;}
@@ -1060,17 +1080,21 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
         (notes.length?`<span class="dn2">${esc(notes.join(' · '))}</span>`:'')+
         ((unc||shift)?`<span class="dact">${shift}${unc?`<button type="button" class="btn mini" data-confirm="${m.id}">${m.noTime?'Poner hora':'Confirmar horario'}</button>`:''}</span>`:'')+
         `</span></div>`;
-    }).join('')+`</div>`;
+    };
+    if(list.some(m=>m.side==='L')){
+      const order=laneOrder(list).filter(k=>list.some(m=>laneKey(m)===k));
+      html+=order.map(k=>`<h3 class="dgrp">${laneLabel(k)}</h3><div class="dlist">`+list.filter(m=>laneKey(m)===k).map(cardOf).join('')+`</div>`).join('');
+    }else html+=`<div class="dlist">`+list.map(cardOf).join('')+`</div>`;
 
     if(timed.length){
       const HOUR=64,PX=HOUR/60;
       const lo=Math.min(8,Math.floor(Math.min(...timed.map(m=>span(m)[0]))/60));
       const hi=Math.max(22,Math.ceil(Math.max(...timed.map(m=>span(m)[1]))/60));
-      const lay=layoutCols(timed);
+      const lanes=timed.some(m=>m.side==='L')?laneOrder(timed):['ALL'];
       let lines='';
       for(let h=lo;h<=hi;h++)lines+=`<div class="hl" style="top:${(h-lo)*HOUR}px"><span>${pad(h%24)}:00</span></div>`;
-      const evs=timed.map(m=>{
-        const [s,e]=span(m);const L=lay.get(m.id);const st=status(m,cm);const local=m.side==='L';
+      const evOf=(m,L)=>{
+        const [s,e]=span(m);const st=status(m,cm);const local=m.side==='L';
         const top=(s-lo*60)*PX,h=Math.max((e-s)*PX,78);
         const meta=[clubName(m),m.team,m.venue&&('Lugar: '+m.venue)].filter(Boolean).join(' · ');
         const unc=m.confirmed===false&&!m.done;
@@ -1080,7 +1104,14 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
           `<span class="l1"><span class="tag">${local?'L':'V'}</span><span class="tm">${fmt(s)}–${fmt(e)}</span>${st!=='ok'?ALERT:''}</span>`+
           `<span class="rv">${esc(m.rival)}</span>`+
           `${m.coach?`<span class="mt">Entrenador: ${esc(m.coach)}</span>`:''}${meta?`<span class="mt">${esc(meta)}</span>`:''}</button>`;
+      };
+      const N=lanes.length;
+      const evs=lanes.map((k,idx)=>{
+        const items=k==='ALL'?timed:timed.filter(m=>laneKey(m)===k);
+        const lay=layoutCols(items);
+        return `<div class="lane" style="left:calc(${idx}*100%/${N});width:calc(100%/${N})">${items.map(m=>evOf(m,lay.get(m.id))).join('')}</div>`;
       }).join('');
+      if(lanes[0]!=='ALL')html+=`<div class="lanes">${lanes.map(k=>`<span>${laneLabel(k)}</span>`).join('')}</div>`;
       html+=`<div class="tl" style="height:${(hi-lo)*HOUR}px">${lines}<div class="evs">${evs}</div></div>`;
     }
     document.getElementById('day').innerHTML=html;
@@ -1162,6 +1193,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     if(m&&![...f.dur.options].some(o=>o.value===String(m.dur))){const o=document.createElement('option');o.value=String(m.dur);o.textContent=m.dur+' min';f.dur.appendChild(o);}
     f.dur.value=m?String(m.dur):'120';
     f.venue.value=m?(m.venue||''):'';
+    {const cv=m?(m.court||''):'';if(cv&&![...f.court.options].some(o=>o.value===cv))f.court.add(new Option(cv,cv));f.court.value=cv;}
     f.coach.value=m?(m.coach||''):'';
     f.team.value=m?(m.team||''):'';
     document.getElementById('venues').innerHTML=venueList().map(v=>`<option value="${esc(v)}"></option>`).join('');
@@ -1184,7 +1216,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       return;
     }
     const nt=f.noTime.checked;
-    const data={date:f.date.value,time:nt?'00:00':f.time.value,dur:Number(f.dur.value),rival,side:f.side.value,team:f.team.value.trim(),coach:f.coach.value.trim(),venue:f.venue.value.trim(),club:f.club.value||cfg.lastClub||'SC',noTime:nt,confirmed:nt?false:f.confirmed.checked};
+    const data={date:f.date.value,time:nt?'00:00':f.time.value,dur:Number(f.dur.value),rival,side:f.side.value,team:f.team.value.trim(),coach:f.coach.value.trim(),venue:f.venue.value.trim(),court:f.court.value,club:f.club.value||cfg.lastClub||'SC',noTime:nt,confirmed:nt?false:f.confirmed.checked};
     cfg.lastClub=data.club;saveCfg();
     if(data.confirmed&&editing)delete editing.prev;
     if(editing){Object.assign(editing,data);}
@@ -1806,6 +1838,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
         }else{
           const chg=(m.isqD!==x.d||m.isqT!==t0)||((m.result||'')!==(x.x||''))||(!!x.v&&nk(m.venue)!==nk(canonV(x.v)));
           if(nk(m.rival)===nk(x.r))delete base.rival;
+          if(!x.c)delete base.court;                                   // si la fuente no dice la pista, se conserva la que pusiste
           Object.assign(m,base);
           if(!m.coach||m.coach===m.isqCoach)m.coach=t.coach||m.coach||'';
           m.isqCoach=t.coach||'';
@@ -1836,7 +1869,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v36';
+  const APP_VERSION='v37';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');

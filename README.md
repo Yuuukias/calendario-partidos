@@ -162,3 +162,7 @@ Junto a los botones de club hay un selector **«Todos los entrenadores»**. Al e
 ## Confirmación automática
 
 Todo partido importado (iSquad, CEVO o PDF del Maresme) que tenga **fecha y hora** entra, o pasa, a **confirmado** automáticamente. Si la fuente cambia su horario, queda confirmado con el nuevo y se ve «Antes: …». Los partidos **sin hora** siguen «sin confirmar». Un partido que hayas cambiado a mano no se confirma solo.
+
+## Pistas en el panel del día
+
+En el panel de la derecha, los partidos **locales** (Sant Celoni) se separan por pista: la lista sale agrupada en **Pista 1**, **Pista 2** (y **Sin pista** si no tienen una asignada) y la línea de horas tiene una columna por pista; los partidos de **Fuera** van aparte. La pista viene de iSquad cuando la indica; en cualquier partido se puede elegir en el formulario (campo **Pista**) y se respeta al volver a importar.
