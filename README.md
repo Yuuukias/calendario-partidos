@@ -158,3 +158,7 @@ Las peticiones al lector se hacen sin usar la copia guardada por el navegador (`
 ## Filtro por entrenador
 
 Junto a los botones de club hay un selector **«Todos los entrenadores»**. Al elegir uno, el calendario, los contadores, el detalle del día y los avisos enseñan solo sus partidos. Los nombres equivalentes («Juanma» y «Juan Manuel Arguelles») cuentan como la misma persona. Los partidos sin entrenador no salen mientras haya un filtro puesto. Se recuerda la elección y también está en el móvil.
+
+## Confirmación automática desde iSquad
+
+Un partido de la federación que en iSquad ya tiene **día y hora fijados** entra (o pasa) a **confirmado** automáticamente. Si iSquad cambia su horario, queda confirmado con el nuevo y se ve «Antes: …». Los que tienen hora pero cuyo día iSquad aún no ha fijado, y los sin hora, siguen «sin confirmar». Los escolares (PDF/CEVO) no se confirman solos. Un partido que hayas cambiado a mano no se confirma automáticamente.

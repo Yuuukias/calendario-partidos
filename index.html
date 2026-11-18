@@ -1792,7 +1792,8 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     const sel=selOverride||new Set([...qlist.querySelectorAll('input:checked')].map(i=>Number(i.value)));
     if(!sel.size){qmsg.className='fmsg err';qmsg.textContent='Marca al menos una categoría.';return;}
     const dur=Number(document.getElementById('qdur').value)||90,incPast=document.getElementById('qpast').checked;
-    let add=0,upd=0,rec=0;const fresh=[];
+    let add=0,upd=0,rec=0,moved=0,autoc=0;const fresh=[];
+    const setInIsq=(t,x,t0)=>t.id<9000&&!!t0&&!!x.f;     // federación: día y hora fijados en iSquad = confirmado
     ISQ.teams.filter(t=>sel.has(t.id)).forEach(t=>{
       t.m.forEach(x=>{
         if(!incPast&&x.s==='finalizado')return;
@@ -1800,7 +1801,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
         const base={rival:x.r,side:x.h?'L':'V',team:t.cat,venue:canonV(x.v||''),court:x.c||'',lat:x.la,lon:x.lo,club:'SC',result:x.x||'',done:x.s==='finalizado',fed:!!x.f,nota:x.n||''};
         let m=matches.find(q=>q.isq===key);
         if(!m){
-          m=Object.assign({id:uid(),date:defaultDay(x.d,!!t0,t.id>=9000,!!x.h,!!x.f),time:t0||'00:00',dur,noTime:!t0,confirmed:x.s==='finalizado',coach:t.coach||'',isq:key,isqD:x.d,isqT:t0,isqCoach:t.coach||''},base);
+          m=Object.assign({id:uid(),date:defaultDay(x.d,!!t0,t.id>=9000,!!x.h,!!x.f),time:t0||'00:00',dur,noTime:!t0,confirmed:x.s==='finalizado'||setInIsq(t,x,t0),coach:t.coach||'',isq:key,isqD:x.d,isqT:t0,isqCoach:t.coach||''},base);
           matches.push(m);add++;fresh.push(m.date);
         }else{
           const chg=(m.isqD!==x.d||m.isqT!==t0)||((m.result||'')!==(x.x||''))||(!!x.v&&nk(m.venue)!==nk(canonV(x.v)));
@@ -1809,10 +1810,15 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
           if(!m.coach||m.coach===m.isqCoach)m.coach=t.coach||m.coach||'';
           m.isqCoach=t.coach||'';
           if(m.isqD!==x.d||m.isqT!==t0){
-            if(m.confirmed===true&&!m.done){m.prev=`${shortDay(m.date)}${m.noTime?'':' '+m.time}`;rec++;}
+            const wasConf=m.confirmed===true&&!m.done;
+            if(wasConf)m.prev=`${shortDay(m.date)}${m.noTime?'':' '+m.time}`;
             m.date=defaultDay(x.d,!!t0,t.id>=9000,!!x.h,!!x.f);m.time=t0||'00:00';m.noTime=!t0;
-            if(!m.done)m.confirmed=false;
+            const autoNow=setInIsq(t,x,t0);
+            if(!m.done)m.confirmed=autoNow;                              // fijado en iSquad: queda confirmado; si no, a «sin confirmar»
+            if(wasConf){if(autoNow)moved++;else rec++;}
             m.isqD=x.d;m.isqT=t0;
+          }else if(m.confirmed===false&&!m.done&&setInIsq(t,x,t0)&&!m.noTime&&m.date===x.d&&m.time===t0){
+            m.confirmed=true;autoc++;                                    // ya estaba fijado en iSquad y no lo has cambiado a mano
           }
           if(chg)upd++;
         }
@@ -1822,14 +1828,15 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     const up=fresh.filter(d=>d>=todayKey).sort()[0]||fresh.sort()[0];
     if(up){const d=fromKey(up);view={y:d.getFullYear(),m:d.getMonth()};selected=up;}
     qdlg.close();render();
-    const summary=`${add} ${add===1?'partido añadido':'partidos añadidos'}${upd?`, ${upd} ${upd===1?'actualizado':'actualizados'}`:''}${rec?`. ${rec} ${rec===1?'ha cambiado de horario y vuelve':'han cambiado de horario y vuelven'} a «sin confirmar»`:''}.`;
-    if(!quiet||add||upd||rec)say(summary,'ok',8000);
-    isqRoutes(quiet&&!(add||upd||rec)?'':summary);
+    const summary=`${add} ${add===1?'partido añadido':'partidos añadidos'}${upd?`, ${upd} ${upd===1?'actualizado':'actualizados'}`:''}${rec?`. ${rec} ${rec===1?'ha cambiado de horario y vuelve':'han cambiado de horario y vuelven'} a «sin confirmar»`:''}${moved?`. ${moved} ${moved===1?'ha cambiado de horario en iSquad y queda confirmado':'han cambiado de horario en iSquad y quedan confirmados'}`:''}${autoc?`. ${autoc} ${autoc===1?'confirmado':'confirmados'} porque ya figuran con día y hora en iSquad`:''}.`;
+    const any=add||upd||rec||moved||autoc;
+    if(!quiet||any)say(summary,'ok',8000);
+    isqRoutes(quiet&&!any?'':summary);
   }
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v34';
+  const APP_VERSION='v35';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
