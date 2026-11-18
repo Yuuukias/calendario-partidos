@@ -1793,7 +1793,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     if(!sel.size){qmsg.className='fmsg err';qmsg.textContent='Marca al menos una categoría.';return;}
     const dur=Number(document.getElementById('qdur').value)||90,incPast=document.getElementById('qpast').checked;
     let add=0,upd=0,rec=0,moved=0,autoc=0;const fresh=[];
-    const setInIsq=(t,x,t0)=>t.id<9000&&!!t0&&!!x.f;     // federación: día y hora fijados en iSquad = confirmado
+    const setInIsq=(t,x,t0)=>!!t0;                       // con fecha y hora en la fuente (iSquad, CEVO, Maresme) = confirmado
     ISQ.teams.filter(t=>sel.has(t.id)).forEach(t=>{
       t.m.forEach(x=>{
         if(!incPast&&x.s==='finalizado')return;
@@ -1828,7 +1828,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     const up=fresh.filter(d=>d>=todayKey).sort()[0]||fresh.sort()[0];
     if(up){const d=fromKey(up);view={y:d.getFullYear(),m:d.getMonth()};selected=up;}
     qdlg.close();render();
-    const summary=`${add} ${add===1?'partido añadido':'partidos añadidos'}${upd?`, ${upd} ${upd===1?'actualizado':'actualizados'}`:''}${rec?`. ${rec} ${rec===1?'ha cambiado de horario y vuelve':'han cambiado de horario y vuelven'} a «sin confirmar»`:''}${moved?`. ${moved} ${moved===1?'ha cambiado de horario en iSquad y queda confirmado':'han cambiado de horario en iSquad y quedan confirmados'}`:''}${autoc?`. ${autoc} ${autoc===1?'confirmado':'confirmados'} porque ya figuran con día y hora en iSquad`:''}.`;
+    const summary=`${add} ${add===1?'partido añadido':'partidos añadidos'}${upd?`, ${upd} ${upd===1?'actualizado':'actualizados'}`:''}${rec?`. ${rec} ${rec===1?'ha cambiado de horario y vuelve':'han cambiado de horario y vuelven'} a «sin confirmar»`:''}${moved?`. ${moved} ${moved===1?'ha cambiado de horario en iSquad y queda confirmado':'han cambiado de horario en iSquad y quedan confirmados'}`:''}${autoc?`. ${autoc} ${autoc===1?'confirmado':'confirmados'} porque ya tienen fecha y hora`:''}.`;
     const any=add||upd||rec||moved||autoc;
     if(!quiet||any)say(summary,'ok',8000);
     isqRoutes(quiet&&!any?'':summary);
@@ -1836,7 +1836,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v35';
+  const APP_VERSION='v36';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
