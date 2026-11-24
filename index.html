@@ -497,7 +497,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     <p class="hint">Los partidos entran como <b>horario sin confirmar</b>: cuando lo confirmes (con el club rival o la federación), pulsa «Confirmar horario». Si vuelves a importar y iSquad cambia una fecha u hora, el partido vuelve a quedar sin confirmar y te muestra el horario anterior.</p>
     <div class="box">
       <b>Actualizar desde iSquad</b>
-      <p class="hint">Vuelve a leer las páginas de la federación (iSquad) y los calendarios escolares del CEVO (Infantil y Aleví) y aplica los cambios de fecha, hora y resultados. El Cadet-Juvenil del Maresme se actualiza cargando su PDF.</p>
+      <p class="hint">Vuelve a leer iSquad, los escolares del CEVO (Infantil y Aleví) y los equipos de Vòlei Masters, y aplica los cambios de fecha, hora y resultados. La primera vez que pulses este botón se añaden los equipos Masters. El Cadet-Juvenil del Maresme se actualiza cargando su PDF.</p>
       <label class="fld">Dirección del lector (Cloudflare)
         <input type="url" id="qworker" placeholder="https://lector-isquad.tu-usuario.workers.dev" inputmode="url" autocomplete="off"></label>
       <div class="actions"><span class="sp"></span><button type="button" class="btn primary" id="qrefresh">Actualizar desde iSquad</button></div>
@@ -1794,7 +1794,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       const coach=t.coach?`Entrenador: ${esc(t.coach)}`:(t.coachNote==='pendiente'?'Entrenador: pendiente de leer en iSquad':(t.coachNote==='no consta'?'Entrenador: no consta en el calendario':'Entrenador: no figura en iSquad'));
       return `<label class="qrow"><input type="checkbox" value="${t.id}" checked><span><b>${esc(t.cat)}</b>`+
         `<small>${coach}</small><small>${total} partidos${sinHora?` · ${sinHora} sin hora fijada`:''}${ya?` · ${ya} ya en tu calendario`:''}${t.read?` · leído el ${shortDay(t.read)}`:''}</small>`+
-        (t.url?`<small><a href="${esc(t.url)}" target="_blank" rel="noopener">Ver en iSquad</a></small>`:`<small>Fuente: calendario escolar (PDF)</small>`)+`</span></label>`;
+        (t.url?`<small><a href="${esc(t.url)}" target="_blank" rel="noopener">Ver en iSquad</a></small>`:`<small>Fuente: ${t.src==='masters'?'Vòlei Masters (Sportagia)':'calendario escolar'}</small>`)+`</span></label>`;
     }).join('');
     qmsg.className='fmsg';qmsg.textContent='';
     document.getElementById('qlast').textContent=lastCheckText();document.getElementById('qver').textContent='Versión de la app: '+APP_VERSION;
@@ -1814,7 +1814,15 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       (fails?` No se pudieron calcular ${fails} (sin conexión o servicio no disponible): puedes indicarlos a mano en «Trayectos».`:''),fails?'bad':'ok',14000);
   }
   const nk=v=>norm(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const canonV=v=>{if(!v)return '';const f=matches.find(m=>m.venue&&nk(m.venue)===nk(v));return f?f.venue:v;};
+  const accents=v=>(String(v).match(/[^\u0000-\u007f]/g)||[]).length;
+  const canonV=v=>{                                                          // mismo lugar escrito distinto: se queda la versión con más acentos
+    if(!v)return '';
+    const same=matches.filter(m=>m.venue&&nk(m.venue)===nk(v));
+    if(!same.length)return v;
+    const best=accents(v)>accents(same[0].venue)?v:same[0].venue;
+    if(best!==same[0].venue)same.forEach(m=>{m.venue=best;});
+    return best;
+  };
   /* Día por defecto de los partidos SIN hora fijada: si son LOCALES (federación o escolares) -> domingo */
   const dowOf=iso=>new Date(iso+'T12:00:00').getDay();
   const shiftIso=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return keyOf(d);};
@@ -1874,13 +1882,15 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v38';
+  const APP_VERSION='v39';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
     const got=[],fail=[];
-    const cids=Array.isArray(d0.cevo)?d0.cevo:[];             // calendarios escolares del CEVO (PDF), si el lector los trae
-    const total=ids.length+cids.length;
+    const cids=Array.isArray(d0.cevor)&&d0.cevor.length?d0.cevor:(Array.isArray(d0.cevo)?d0.cevo:[]);   // escolares del CEVO (páginas de resultados; PDF si el lector es antiguo)
+    const mids=Array.isArray(d0.masters)?d0.masters:[];                                               // Vòlei Masters (Sportagia)
+    const useRes=Array.isArray(d0.cevor)&&d0.cevor.length>0;
+    const total=ids.length+cids.length+mids.length;
     for(let i=0;i<ids.length;i++){
       if(progress)progress(i+1,total);
       try{const r=await fetch(`${url}/?team=${ids[i]}`,{cache:'no-store'});const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
@@ -1888,10 +1898,28 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     }
     for(let i=0;i<cids.length;i++){
       if(progress)progress(ids.length+i+1,total);
-      try{const r=await fetch(`${url}/?cevo=${cids[i]}`,{cache:'no-store'});if(!r.ok)throw new Error('http');const t=await escFromBlob(await r.blob());if(!t)throw new Error('sin partidos');got.push(t);}
-      catch(e){fail.push({id:'cevo-'+cids[i],error:(e&&e.message)||String(e)});}
+      try{
+        let t=null,err=null;
+        if(useRes){
+          try{
+            const r=await fetch(`${url}/?cevor=${cids[i]}`,{cache:'no-store'});const d=await r.json();
+            if(!d.ok)throw new Error(d.error||'sin datos');
+            t=escTeams({cat:d.cat,grup:'',rows:d.rows},'valles');if(!t)throw new Error('sin partidos de Sant Celoni');
+          }catch(e){err=e;t=null;}
+        }
+        if(!t){                                              // plan B: el PDF de exportación
+          const r=await fetch(`${url}/?cevo=${cids[i]}`,{cache:'no-store'});if(!r.ok)throw (err||new Error('http '+r.status));
+          t=await escFromBlob(await r.blob());if(!t)throw (err||new Error('sin partidos'));
+        }
+        got.push(t);
+      }catch(e){fail.push({id:'cevo-'+cids[i],error:(e&&e.message)||String(e)});}
     }
-    return {ids:ids.concat(cids),got,fail};
+    for(let i=0;i<mids.length;i++){
+      if(progress)progress(ids.length+cids.length+i+1,total);
+      try{const r=await fetch(`${url}/?masters=${mids[i]}`,{cache:'no-store'});const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
+      catch(e){fail.push({id:'masters-'+mids[i],error:(e&&e.message)||String(e)});}
+    }
+    return {ids:ids.concat(cids,mids),got,fail};
   }
   function recordCheck(res,how){
     try{localStorage.setItem('partidos-isq-last',JSON.stringify({at:new Date().toISOString(),how,total:res.ids.length,ok:res.got.length,fail:res.fail.slice(0,14).map(x=>({id:x.id,error:String(x.error||'').slice(0,420)}))}));}catch(e){}
@@ -1918,7 +1946,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   function lastCheckText(){
     let l=null;try{l=JSON.parse(localStorage.getItem('partidos-isq-last')||'null');}catch(e){}
     if(!l)return 'Todavía no se ha comprobado nada desde esta versión.';
-    const nm=id=>/^cevo-/.test(String(id))?'CEVO '+String(id).slice(5):'equipo '+id;
+    const nm=id=>/^cevo-/.test(String(id))?'CEVO '+String(id).slice(5):/^masters-/.test(String(id))?'Masters '+String(id).slice(8):'equipo '+id;
     const uniq=[...new Set(l.fail.map(x=>x.error))];
     const f=uniq.length===1&&l.fail.length>1?`${l.fail.length} categorías con el mismo fallo → ${uniq[0]}`:l.fail.map(x=>`${nm(x.id)}: ${x.error}`).join(' · ');
     return `Última comprobación (${l.how}): ${fmtAt(l.at)} · ${l.ok} de ${l.total} categorías leídas.`+(f?' Fallos → '+f:'');
@@ -2099,7 +2127,8 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       const home=isSC(r.local)?1:0;
       const ve=escVenue(r.ven+(r.court?' '+r.court:''));
       const t=/^(\d{1,2}):(\d{2})$/.test(r.hora||'')&&r.hora!=='00:00'&&r.hora!=='0:00'?r.hora.replace(/^(\d):/,'0$1:'):null;
-      m.push({j:r.j,d,t,h:home,r:tidyName(home?r.vis:r.local),v:ve.v,c:ve.c,la:ve.la,lo:ve.lo,f,s:'pendiente',x:'',n:nota});
+      const rr=r.res||'';
+      m.push({j:r.j,d,t,h:home,r:tidyName(home?r.vis:r.local),v:ve.v,c:ve.c,la:ve.la,lo:ve.lo,f,s:rr?'finalizado':'pendiente',x:rr?(home?rr:rr.split('-').reverse().join('-')):'',n:nota});
     });
     return {id,cat:label,coach:'',coachNote:'no consta',url:'',src:'escolar',m};
   }

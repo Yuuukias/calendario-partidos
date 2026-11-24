@@ -170,3 +170,7 @@ En el panel de la derecha, los partidos **locales** (Sant Celoni) se separan por
 ## Estado de la actualización a la vista
 
 Debajo de los botones de filtro hay una línea con la **última actualización** («actualizado 24 nov, 08:22 · 12 de 12 categorías», con aviso si alguna falló) y un botón **Actualizar ahora** que lee iSquad y el CEVO en el momento. Si hay equipos del Maresme, también dice cuándo se cargó su PDF.
+
+## Masters y CEVO por resultados
+
+**Actualizar desde iSquad** también trae los escolares del CEVO leyendo sus páginas de resultados (horas y resultados reales) y los tres equipos de **Vòlei Masters** (Blanc, Vermell y Negre) desde Sportagia. Los partidos Masters sin día ni hora salen con una nota con la ventana de la jornada. El Maresme sigue siendo manual (PDF).
