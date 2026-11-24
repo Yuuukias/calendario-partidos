@@ -349,6 +349,9 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
 .lane{position:absolute;top:0;bottom:0}
 .lane+.lane{border-left:1px dashed var(--line)}
 .dgrp{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:16px 0 0}
+.syncline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:13px;color:var(--muted)}
+.syncline.warn{color:#9A5B00}
+.syncline .btn{flex:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -394,6 +397,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
       <span class="it"><span class="sw uncsw"></span>Horario sin confirmar (?)</span></div>
   </div>
 
+  <div class="syncline" id="syncline"></div>
   <div class="stats" id="stats"></div>
   <div id="netmsg" class="netmsg" role="status" hidden></div>
 
@@ -1119,6 +1123,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
 
   function render(){
     syncCoachFilter();
+    try{syncStatus();}catch(e){}
     const cm=conflictMap();
     renderHead(cm);renderGrid(cm);renderDay(cm);
     document.getElementById('legNoClub').hidden=!matches.some(m=>!m.club);
@@ -1869,7 +1874,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v37';
+  const APP_VERSION='v38';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
@@ -1890,6 +1895,25 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   }
   function recordCheck(res,how){
     try{localStorage.setItem('partidos-isq-last',JSON.stringify({at:new Date().toISOString(),how,total:res.ids.length,ok:res.got.length,fail:res.fail.slice(0,14).map(x=>({id:x.id,error:String(x.error||'').slice(0,420)}))}));}catch(e){}
+    try{syncStatus();}catch(e){}
+  }
+  function syncStatus(){
+    const el=document.getElementById('syncline');if(!el)return;
+    let l=null,pdf=null;try{l=JSON.parse(localStorage.getItem('partidos-isq-last')||'null');}catch(e){}
+    try{pdf=JSON.parse(localStorage.getItem('partidos-pdf-last')||'null');}catch(e){}
+    const hasEsc=matches.some(m=>m.isq&&m.isq.startsWith('9003-'));
+    let t=l?`iSquad y CEVO: actualizado ${fmtAt(l.at)} · ${l.ok} de ${l.total} categorías${l.fail.length?` · <b>${l.fail.length} con fallo</b>`:''}`:'iSquad y CEVO: todavía sin comprobar en este navegador';
+    if(hasEsc)t+=` · Maresme (PDF): ${pdf?'cargado '+fmtAt(pdf.at):'sin cargar'}`;
+    el.className='syncline'+(l&&l.fail.length?' warn':'');
+    el.innerHTML=`<span>${t}</span> <button type="button" class="btn mini" id="syncnow">Actualizar ahora</button>`;
+    document.getElementById('syncnow').onclick=refreshNow;
+  }
+  function refreshNow(){
+    const u=workerUrl();
+    if(!u){say('Falta la dirección del lector: ábrela en iSquad > Actualizar desde iSquad.','bad',9000);return;}
+    document.getElementById('qworker').value=u;
+    const b=document.getElementById('syncnow');if(b){b.disabled=true;b.textContent='Actualizando…';}
+    document.getElementById('qrefresh').click();
   }
   function lastCheckText(){
     let l=null;try{l=JSON.parse(localStorage.getItem('partidos-isq-last')||'null');}catch(e){}
@@ -1913,13 +1937,14 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     try{localStorage.setItem(WKEY,url);}catch(e){}
     btn.disabled=true;let res;
     try{res=await isqFetchAll(url,(i,n)=>{msg.className='fmsg';msg.textContent=`Leyendo iSquad… ${i} de ${n}`;});}
-    catch(e){msg.className='fmsg err';msg.textContent='No se pudo conectar con el lector. Revisa la dirección y tu conexión.';btn.disabled=false;return;}
+    catch(e){msg.className='fmsg err';msg.textContent='No se pudo conectar con el lector. Revisa la dirección y tu conexión.';btn.disabled=false;recordCheck({ids:[],got:[],fail:[{id:'lector',error:'no se pudo conectar con el lector'}]},'manual');return;}
     btn.disabled=false;recordCheck(res,'manual');
     if(!res.got.length){msg.className='fmsg err';msg.textContent='No se pudo leer ninguna categoría. '+lastCheckText().replace(/^.*?leídas\.\s*/,'');return;}
     const gid=storeUpdate(res.got);
     try{localStorage.setItem('partidos-isq-auto',String(Date.now()));}catch(e){}
     runIsq(gid);
     msg.className='fmsg'+(res.fail.length?' err':'');msg.textContent=lastCheckText();
+    try{syncStatus();}catch(e){}
     if(res.fail.length)say(`No se pudieron leer ${res.fail.length} de ${res.ids.length} categorías; se han conservado sus datos anteriores.`,'bad',10000);
   };
   /* ---------- horarios escolares: PDF del Consell Esportiu (Vallès Oriental y Maresme) ---------- */
@@ -2100,6 +2125,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     }
     if(!teams.length){msg.className='fmsg err';msg.textContent='No he encontrado partidos de Sant Celoni en ese PDF. ¿Es el calendario del Consell Esportiu?';return;}
     const gid=storeUpdate(teams);
+    try{localStorage.setItem('partidos-pdf-last',JSON.stringify({at:new Date().toISOString(),cats:teams.map(t=>t.cat)}));syncStatus();}catch(e){}
     msg.className='fmsg';msg.textContent=teams.map(t=>`${t.cat}: ${t.m.length} partidos`).join(' · ')+(bad.length?` · No se pudo leer: ${bad.join(', ')}`:'');
     runIsq(gid);
   };

@@ -166,3 +166,7 @@ Todo partido importado (iSquad, CEVO o PDF del Maresme) que tenga **fecha y hora
 ## Pistas en el panel del día
 
 En el panel de la derecha, los partidos **locales** (Sant Celoni) se separan por pista: la lista sale agrupada en **Pista 1**, **Pista 2** (y **Sin pista** si no tienen una asignada) y la línea de horas tiene una columna por pista; los partidos de **Fuera** van aparte. La pista viene de iSquad cuando la indica; en cualquier partido se puede elegir en el formulario (campo **Pista**) y se respeta al volver a importar.
+
+## Estado de la actualización a la vista
+
+Debajo de los botones de filtro hay una línea con la **última actualización** («actualizado 24 nov, 08:22 · 12 de 12 categorías», con aviso si alguna falló) y un botón **Actualizar ahora** que lee iSquad y el CEVO en el momento. Si hay equipos del Maresme, también dice cuándo se cargó su PDF.
