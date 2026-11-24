@@ -174,3 +174,7 @@ Debajo de los botones de filtro hay una línea con la **última actualización**
 ## Masters y CEVO por resultados
 
 **Actualizar desde iSquad** también trae los escolares del CEVO leyendo sus páginas de resultados (horas y resultados reales) y los tres equipos de **Vòlei Masters** (Blanc, Vermell y Negre) desde Sportagia. Los partidos Masters sin día ni hora salen con una nota con la ventana de la jornada. El Maresme sigue siendo manual (PDF).
+
+## iSquad con límite de peticiones
+
+La app espacia las lecturas de iSquad (1,5 s entre equipos) y el lector reintenta si iSquad responde «demasiadas peticiones».

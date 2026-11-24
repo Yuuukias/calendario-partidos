@@ -1882,7 +1882,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v39';
+  const APP_VERSION='v40';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
@@ -1893,6 +1893,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     const total=ids.length+cids.length+mids.length;
     for(let i=0;i<ids.length;i++){
       if(progress)progress(i+1,total);
+      if(i>0)await new Promise(r=>setTimeout(r,1500));          // iSquad limita las peticiones seguidas: se espacian
       try{const r=await fetch(`${url}/?team=${ids[i]}`,{cache:'no-store'});const d=await r.json();if(!d.ok||!d.team||!Array.isArray(d.team.m)||!d.team.m.length)throw new Error(d.error||'sin datos');got.push(d.team);}
       catch(e){fail.push({id:ids[i],error:(e&&e.message)||String(e)});}
     }
