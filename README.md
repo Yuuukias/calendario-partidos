@@ -178,3 +178,7 @@ Debajo de los botones de filtro hay una línea con la **última actualización**
 ## iSquad con límite de peticiones
 
 La app espacia las lecturas de iSquad (1,5 s entre equipos) y el lector reintenta si iSquad responde «demasiadas peticiones».
+
+## iSquad por calendario .ics
+
+La web clásica de iSquad ya no responde; el lector usa el calendario .ics de cada equipo (jornada, día, hora y estado). Se conservan el lugar, la pista, el entrenador y los resultados que ya tenías.

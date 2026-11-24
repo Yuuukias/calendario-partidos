@@ -1791,7 +1791,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
     qlist.innerHTML=ISQ.teams.map(t=>{
       const total=t.m.length,sinHora=t.m.filter(x=>!x.t).length;
       const ya=matches.filter(m=>m.isq&&m.isq.startsWith(t.id+'-')).length;
-      const coach=t.coach?`Entrenador: ${esc(t.coach)}`:(t.coachNote==='pendiente'?'Entrenador: pendiente de leer en iSquad':(t.coachNote==='no consta'?'Entrenador: no consta en el calendario':'Entrenador: no figura en iSquad'));
+      const coach=t.coach?`Entrenador: ${esc(t.coach)}`:(t.coachNote==='pendiente'?'Entrenador: pendiente de leer en iSquad':(t.coachNote==='no consta'?'Entrenador: no consta en el calendario':(t.coachNote==='ics'?'Entrenador y lugar: se conservan los que ya tenías (el calendario nuevo de iSquad no los trae)':'Entrenador: no figura en iSquad')));
       return `<label class="qrow"><input type="checkbox" value="${t.id}" checked><span><b>${esc(t.cat)}</b>`+
         `<small>${coach}</small><small>${total} partidos${sinHora?` · ${sinHora} sin hora fijada`:''}${ya?` · ${ya} ya en tu calendario`:''}${t.read?` · leído el ${shortDay(t.read)}`:''}</small>`+
         (t.url?`<small><a href="${esc(t.url)}" target="_blank" rel="noopener">Ver en iSquad</a></small>`:`<small>Fuente: ${t.src==='masters'?'Vòlei Masters (Sportagia)':'calendario escolar'}</small>`)+`</span></label>`;
@@ -1852,6 +1852,8 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
           const chg=(m.isqD!==x.d||m.isqT!==t0)||((m.result||'')!==(x.x||''))||(!!x.v&&nk(m.venue)!==nk(canonV(x.v)));
           if(nk(m.rival)===nk(x.r))delete base.rival;
           if(!x.c)delete base.court;                                   // si la fuente no dice la pista, se conserva la que pusiste
+          if(!x.v){delete base.venue;delete base.lat;delete base.lon;}   // sin lugar en la fuente (calendario .ics): se conserva el que ya tenías
+          if(!x.x&&m.result)delete base.result;                          // sin resultado en la fuente: se conserva el que ya tenías
           Object.assign(m,base);
           if(!m.coach||m.coach===m.isqCoach)m.coach=t.coach||m.coach||'';
           m.isqCoach=t.coach||'';
@@ -1882,7 +1884,7 @@ body.ro #qdlg .box:has(#qlist),body.ro #qdlg .row2,body.ro #qgo,body.ro #qdlg la
   const WKEY='partidos-isq-worker';
   document.getElementById('isqBtn').onclick=()=>{openIsq();try{document.getElementById('qworker').value=localStorage.getItem(WKEY)||ISQ_WORKER||'';}catch(e){}document.getElementById('qrmsg').textContent='';};
   // Dirección fija del lector (se puede dejar escrita aquí; si está vacía se usa la guardada en el navegador)
-  const APP_VERSION='v40';
+  const APP_VERSION='v41';
   const ISQ_WORKER='https://lector-isquad.comunicacio-93b.workers.dev';
   async function isqFetchAll(url,progress){
     const r0=await fetch(url+'/',{cache:'no-store'});const d0=await r0.json();const ids=d0.teams;if(!Array.isArray(ids))throw new Error('formato');
